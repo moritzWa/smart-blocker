@@ -1,0 +1,14 @@
+{
+  "name": "smart-blocker-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm run dev -w client",
+    "build": "npm run build -w client",
+    "preview": "npm run preview -w client"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}

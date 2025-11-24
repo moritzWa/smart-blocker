@@ -1,0 +1,10 @@
+{
+  "name": "smart-blocker-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Server not implemented yet'",
+    "build": "echo 'Server not implemented yet'"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Smart Blocker",
+  "version": "1.0.0",
+  "description": "Block distracting websites with temporary unblock functionality",
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/content-script.tsx"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "src/options/options.html",
+  "action": {
+    "default_title": "Smart Blocker"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["index.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
