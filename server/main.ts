@@ -21,7 +21,7 @@ async function validateUnblockReason(
   hostname: string,
 ): Promise<UnblockResponse> {
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-2024-08-06",
+    model: "gpt-4o-mini",
     messages: [
       {
         role: "system",
@@ -31,13 +31,13 @@ Your job:
 1. Evaluate if their reason is legitimate and productive (e.g., work, marketplace, specific tasks)
 2. Reject entertainment, procrastination, or vague reasons
 3. Estimate realistic time needed (1-60 minutes)
-4. Provide clear, conversational reasoning
+4. Keep reasoning VERY brief (under 20 words)
 
 Examples:
-- "Check Facebook Marketplace for my listing replies" → VALID, 5 min
-- "Need to watch a YouTube tutorial on React hooks" → VALID, 15 min
-- "Just want to scroll TikTok" → INVALID
-- "Bored" → INVALID`,
+- "Check Facebook Marketplace for my listing replies" → VALID, 5 min, "Legitimate marketplace business"
+- "Need to watch a YouTube tutorial on React hooks" → VALID, 15 min, "Valid educational purpose"
+- "Just want to scroll TikTok" → INVALID, "Pure entertainment, not productive"
+- "Bored" → INVALID, "Not a valid reason"`,
       },
       {
         role: "user",

@@ -34,18 +34,17 @@ export default function BlockOverlay({
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:8000/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostname, reason }),
+      const response = await chrome.runtime.sendMessage({
+        type: 'VALIDATE_REASON',
+        hostname,
+        reason,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to validate reason');
+      if ('error' in response) {
+        setError(response.error);
+      } else {
+        setAiResponse(response);
       }
-
-      const data: AIResponse = await response.json();
-      setAiResponse(data);
     } catch (err) {
       setError('Failed to connect to validation service');
       console.error(err);

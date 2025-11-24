@@ -1,13 +1,24 @@
 import { useEffect, useState } from 'react';
 
+interface UnblockedSite {
+  domain: string;
+  expiryTime: number;
+}
+
 export default function Options() {
   const [allowedSites, setAllowedSites] = useState('');
   const [blockedSites, setBlockedSites] = useState('');
   const [defaultMinutes, setDefaultMinutes] = useState(5);
   const [status, setStatus] = useState('');
+  const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
 
   useEffect(() => {
     loadSettings();
+    loadUnblockedSites();
+
+    // Update unblocked sites every 5 seconds
+    const interval = setInterval(loadUnblockedSites, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   async function loadSettings() {
@@ -20,6 +31,24 @@ export default function Options() {
     setAllowedSites((result.allowedSites as string[]).join('\n'));
     setBlockedSites((result.blockedSites as string[]).join('\n'));
     setDefaultMinutes(result.defaultUnblockMinutes as number);
+  }
+
+  async function loadUnblockedSites() {
+    const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
+    const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
+
+    const sites: UnblockedSite[] = [];
+    const now = Date.now();
+
+    for (const [domain, expiryTime] of Object.entries(temporaryUnblocks)) {
+      if (expiryTime > now) {
+        sites.push({ domain, expiryTime });
+      }
+    }
+
+    // Sort by expiry time (soonest first)
+    sites.sort((a, b) => a.expiryTime - b.expiryTime);
+    setUnblockedSites(sites);
   }
 
   async function saveSettings() {
@@ -36,12 +65,40 @@ export default function Options() {
     setTimeout(() => setStatus(''), 1000);
   }
 
+  function formatTimeRemaining(expiryTime: number): string {
+    const remaining = Math.max(0, expiryTime - Date.now());
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 py-10">
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Smart Blocker Settings
         </h1>
+
+        {unblockedSites.length > 0 && (
+          <section className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-700 mb-3">
+              Currently Unblocked Sites
+            </h2>
+            <div className="space-y-2">
+              {unblockedSites.map(({ domain, expiryTime }) => (
+                <div
+                  key={domain}
+                  className="flex justify-between items-center bg-white px-3 py-2 rounded border border-blue-100"
+                >
+                  <span className="font-mono text-sm text-gray-800">{domain}</span>
+                  <span className="text-sm text-blue-600 font-medium">
+                    {formatTimeRemaining(expiryTime)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="mb-6">
           <h2 className="text-xl font-semibold text-gray-700 mb-2">
