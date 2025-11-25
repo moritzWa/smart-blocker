@@ -1,4 +1,4 @@
-import { checkIfBlocked } from './utils/blocking';
+import { checkIfBlocked, normalizeUrl } from './utils/blocking';
 import { validateUnblockReason } from './services/ai-validation';
 import { unblockSite, addTodoReminder, removeTodoReminder } from './services/storage';
 
@@ -51,7 +51,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'UNBLOCK_SITE') {
-    unblockSite(message.domain, message.minutes).then(sendResponse);
+    unblockSite(message.domain, message.seconds).then(sendResponse);
     return true;
   }
 
@@ -73,6 +73,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'REMOVE_TODO_REMINDER') {
     removeTodoReminder(message.id).then(sendResponse);
     return true;
+  }
+});
+
+// Listen for alarms - automatically re-block sites when temporary unblock expires
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name.startsWith('unblock-')) {
+    const domain = alarm.name.replace('unblock-', '');
+    console.log(`⏰ Unblock expired for ${domain}, checking open tabs...`);
+
+    // Find all tabs with this domain
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      if (tab.id && tab.url) {
+        const tabDomain = normalizeUrl(tab.url);
+        if (tabDomain === domain) {
+          // Redirect to blocked page
+          const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
+            '?url=' + encodeURIComponent(tab.url);
+          chrome.tabs.update(tab.id, { url: blockPageUrl });
+          console.log(`🚫 Re-blocked tab ${tab.id} for ${domain}`);
+        }
+      }
+    }
   }
 });
 

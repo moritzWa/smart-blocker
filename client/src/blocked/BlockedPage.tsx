@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 
 interface AIResponse {
   valid: boolean;
-  minutes: number;
+  seconds: number;
   reasoning: string;
 }
 
@@ -67,12 +67,25 @@ export default function BlockedPage() {
     const response = await chrome.runtime.sendMessage({
       type: 'UNBLOCK_SITE',
       domain,
-      minutes: aiResponse.minutes,
+      seconds: aiResponse.seconds,
     });
 
     if (response.success) {
       window.location.href = blockedUrl;
     }
+  };
+
+  // Helper to format seconds into human-readable time
+  const formatTime = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${seconds} sec`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (remainingSeconds === 0) {
+      return `${minutes} min`;
+    }
+    return `${minutes}m ${remainingSeconds}s`;
   };
 
   const handleSaveTodoReminder = async () => {
@@ -205,7 +218,7 @@ export default function BlockedPage() {
                   </p>
                   {aiResponse.valid && (
                     <p className="text-green-600 dark:text-green-400 font-semibold mt-3 text-lg">
-                      Time allocated: {aiResponse.minutes} minutes
+                      Time allocated: {formatTime(aiResponse.seconds)}
                     </p>
                   )}
                 </div>
@@ -219,7 +232,7 @@ export default function BlockedPage() {
                     onClick={handleConfirmUnblock}
                     className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
                   >
-                    Unblock for {aiResponse.minutes} min
+                    Unblock for {formatTime(aiResponse.seconds)}
                   </button>
                   <button
                     onClick={handleReset}

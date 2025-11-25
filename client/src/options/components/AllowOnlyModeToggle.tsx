@@ -11,9 +11,9 @@ export default function AllowOnlyModeToggle({
     <section className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-1">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-1">
             Allow-Only Mode
-          </h2>
+          </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Block all sites except those in the allowed list
           </p>

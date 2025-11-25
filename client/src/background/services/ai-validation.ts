@@ -1,6 +1,6 @@
 export interface AIResponse {
   valid: boolean;
-  minutes: number;
+  seconds: number;
   reasoning: string;
 }
 

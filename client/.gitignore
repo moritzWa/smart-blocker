@@ -16,3 +16,7 @@ dist
 # Logs
 *.log
 npm-debug.log*
+
+# Vite
+*.timestamp-*
+.vite

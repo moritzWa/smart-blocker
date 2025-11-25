@@ -5,14 +5,14 @@
   "description": "Block distracting websites with temporary unblock functionality",
   "permissions": [
     "storage",
-    "tabs"
+    "tabs",
+    "alarms"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "src/background/service-worker.ts",
-    "type": "module"
+    "service_worker": "src/background/service-worker.js"
   },
   "options_page": "src/options/options.html",
   "action": {

@@ -19,7 +19,6 @@ interface TodoReminder {
 export default function Options() {
   const [allowedSites, setAllowedSites] = useState('');
   const [blockedSites, setBlockedSites] = useState('');
-  const [defaultMinutes, setDefaultMinutes] = useState(5);
   const [allowOnlyMode, setAllowOnlyMode] = useState(false);
   const [status, setStatus] = useState('');
   const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
@@ -38,17 +37,40 @@ export default function Options() {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-save allowedSites after 1 second of no typing
+  useEffect(() => {
+    if (allowedSites === '') return; // Skip on initial load
+    const timer = setTimeout(() => {
+      saveSettings();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [allowedSites]);
+
+  // Auto-save blockedSites after 1 second of no typing
+  useEffect(() => {
+    if (blockedSites === '') return; // Skip on initial load
+    const timer = setTimeout(() => {
+      saveSettings();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [blockedSites]);
+
+  // Auto-save allowOnlyMode immediately when toggled
+  useEffect(() => {
+    // Skip on initial load - check if we've loaded settings at least once
+    if (allowedSites === '' && blockedSites === '') return;
+    saveSettings();
+  }, [allowOnlyMode]);
+
   async function loadSettings() {
     const result = await chrome.storage.sync.get({
       allowedSites: [],
       blockedSites: [],
-      defaultUnblockMinutes: 5,
       allowOnlyMode: false,
     });
 
     setAllowedSites((result.allowedSites as string[]).join('\n'));
     setBlockedSites((result.blockedSites as string[]).join('\n'));
-    setDefaultMinutes(result.defaultUnblockMinutes as number);
     setAllowOnlyMode(result.allowOnlyMode as boolean);
   }
 
@@ -82,29 +104,17 @@ export default function Options() {
     const allowedSitesList = allowedSites.split('\n').filter((s) => s.trim());
     const blockedSitesList = blockedSites.split('\n').filter((s) => s.trim());
 
-    console.log('💾 Saving settings:', {
-      allowedSitesList,
-      blockedSitesList,
-      defaultMinutes,
-      allowOnlyMode,
-    });
-
     await chrome.storage.sync.set({
       allowedSites: allowedSitesList,
       blockedSites: blockedSitesList,
-      defaultUnblockMinutes: defaultMinutes,
       allowOnlyMode,
     });
-
-    // Verify what was actually saved
-    const verification = await chrome.storage.sync.get(['allowOnlyMode']);
-    console.log('✅ Verified stored value:', verification);
 
     // Notify service worker to check all open tabs
     chrome.runtime.sendMessage({ type: 'SETTINGS_UPDATED' });
 
-    setStatus('Settings saved!');
-    setTimeout(() => setStatus(''), 1000);
+    setStatus('Saved');
+    setTimeout(() => setStatus(''), 2000);
   }
 
   async function handleRemoveTodoReminder(id: string) {
@@ -173,15 +183,14 @@ export default function Options() {
           formatTimeRemaining={formatTimeRemaining}
         />
 
-        <AllowOnlyModeToggle
-          allowOnlyMode={allowOnlyMode}
-          onChange={setAllowOnlyMode}
-        />
-
         <section className="mb-6">
           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
             Always Allowed Sites
           </h2>
+          <AllowOnlyModeToggle
+            allowOnlyMode={allowOnlyMode}
+            onChange={setAllowOnlyMode}
+          />
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             One site per line. These sites will never be blocked.
           </p>
@@ -210,37 +219,13 @@ export default function Options() {
           />
         </section>
 
-        <section className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            Default Unblock Duration
-          </h2>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={defaultMinutes}
-              onChange={(e) => setDefaultMinutes(parseInt(e.target.value) || 5)}
-              min="1"
-              max="60"
-              className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-            />
-            <label className="text-gray-700 dark:text-gray-300">minutes</label>
-          </div>
-        </section>
-
-        <button
-          onClick={saveSettings}
-          className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-md transition-colors"
-        >
-          Save Settings
-        </button>
-
         {status && (
-          <span className="ml-4 text-green-600 dark:text-green-400 font-medium">
+          <div className="mb-6 text-green-600 dark:text-green-400 font-medium text-sm">
             {status}
-          </span>
+          </div>
         )}
 
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+        <div className="mt-8 flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
           <a
             href="https://github.com/moritzWa/smart-blocker"
             target="_blank"
@@ -248,6 +233,14 @@ export default function Options() {
             className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             Contribute on GitHub
+          </a>
+          <a
+            href="moritzw.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            Review Extension
           </a>
         </div>
       </div>

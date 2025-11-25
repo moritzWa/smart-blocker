@@ -9,7 +9,7 @@ const openai = new OpenAI({
 
 // Zod schema for structured output
 const UnblockResponseSchema = z.object({
-  minutes: z.number().int().min(1).max(60),
+  seconds: z.number().int().min(10).max(3600), // 10 seconds to 60 minutes
   valid: z.boolean(),
   reasoning: z.string(),
 });
@@ -30,12 +30,19 @@ async function validateUnblockReason(
 Your job:
 1. Evaluate if their reason is legitimate and productive (e.g., work, marketplace, specific tasks)
 2. Reject entertainment, procrastination, or vague reasons
-3. Estimate realistic time needed (1-60 minutes)
+3. Estimate realistic time needed in SECONDS (10-3600 seconds, be precise!)
 4. Keep reasoning EXTREMELY brief (max 8 words, conversational tone)
 
+Time guidelines:
+- Quick checks (weather, single message, lookup): 20-60 seconds
+- Marketplace/messages: 2-5 minutes (120-300 seconds)
+- Short tutorial/specific task: 5-15 minutes (300-900 seconds)
+- Complex tutorial/deep work: 15-60 minutes (900-3600 seconds)
+
 Examples:
-- "Check Facebook Marketplace for my listing replies" → VALID, 5 min, "Marketplace business, 5 min"
-- "Need to watch a YouTube tutorial on React hooks" → VALID, 15 min, "Educational, 15 min"
+- "Check the weather" → VALID, 20 seconds, "Quick lookup"
+- "Check Facebook Marketplace for replies" → VALID, 180 seconds, "Marketplace check"
+- "Watch YouTube tutorial on React hooks" → VALID, 900 seconds, "Educational"
 - "Just want to scroll TikTok" → INVALID, "Pure entertainment"
 - "Bored" → INVALID, "Not valid"`,
       },

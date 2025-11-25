@@ -6,8 +6,8 @@ export interface TodoReminder {
   timestamp: number;
 }
 
-export async function unblockSite(domain: string, minutes: number): Promise<{ success: boolean }> {
-  const expiryTime = Date.now() + (minutes * 60 * 1000);
+export async function unblockSite(domain: string, seconds: number): Promise<{ success: boolean }> {
+  const expiryTime = Date.now() + (seconds * 1000);
 
   const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
@@ -15,7 +15,12 @@ export async function unblockSite(domain: string, minutes: number): Promise<{ su
   temporaryUnblocks[domain] = expiryTime;
   await chrome.storage.sync.set({ temporaryUnblocks });
 
-  console.log(`⏰ Unblocked ${domain} for ${minutes} minutes (until ${new Date(expiryTime)})`);
+  // Schedule alarm to re-block when it expires
+  await chrome.alarms.create(`unblock-${domain}`, {
+    when: expiryTime
+  });
+
+  console.log(`⏰ Unblocked ${domain} for ${seconds} seconds (until ${new Date(expiryTime)})`);
 
   return { success: true };
 }
