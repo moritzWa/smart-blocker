@@ -7,7 +7,10 @@ export default defineConfig({
     react(),
     webExtension({
       manifest: './manifest.json',
-      additionalInputs: ['src/options/options.html'],
+      additionalInputs: [
+        'src/options/options.html',
+        'src/blocked/blocked.html'
+      ],
     }),
   ],
   build: {

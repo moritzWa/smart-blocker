@@ -1,5 +1,31 @@
 console.log('Smart Blocker service worker loaded');
 
+// Listen for tab updates and block instantly
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  // Only check when URL actually changes
+  if (changeInfo.url && tab.url) {
+    const result = await checkIfBlocked(tab.url);
+    if (result.blocked) {
+      const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
+        '?url=' + encodeURIComponent(tab.url);
+      chrome.tabs.update(tabId, { url: blockPageUrl });
+    }
+  }
+});
+
+// Listen for tab activation (switching between tabs)
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  const tab = await chrome.tabs.get(activeInfo.tabId);
+  if (tab.url) {
+    const result = await checkIfBlocked(tab.url);
+    if (result.blocked && !tab.url.includes('blocked.html')) {
+      const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
+        '?url=' + encodeURIComponent(tab.url);
+      chrome.tabs.update(activeInfo.tabId, { url: blockPageUrl });
+    }
+  }
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'CHECK_BLOCKED') {
     checkIfBlocked(message.url).then(sendResponse);
@@ -13,6 +39,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'VALIDATE_REASON') {
     validateUnblockReason(message.hostname, message.reason).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'SETTINGS_UPDATED') {
+    checkAllOpenTabs().then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'ADD_TODO_REMINDER') {
+    addTodoReminder(message.url, message.note).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'REMOVE_TODO_REMINDER') {
+    removeTodoReminder(message.id).then(sendResponse);
     return true;
   }
 });
@@ -149,4 +190,60 @@ async function validateUnblockReason(
     console.error('AI validation error:', error);
     return { error: 'Failed to connect to validation service' };
   }
+}
+
+// Check all open tabs when settings change
+async function checkAllOpenTabs(): Promise<{ success: boolean }> {
+  const tabs = await chrome.tabs.query({});
+
+  for (const tab of tabs) {
+    if (tab.id && tab.url && !tab.url.includes('blocked.html')) {
+      const result = await checkIfBlocked(tab.url);
+      if (result.blocked) {
+        const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
+          '?url=' + encodeURIComponent(tab.url);
+        chrome.tabs.update(tab.id, { url: blockPageUrl });
+      }
+    }
+  }
+
+  return { success: true };
+}
+
+interface TodoReminder {
+  id: string;
+  url: string;
+  hostname: string;
+  note?: string;
+  timestamp: number;
+}
+
+async function addTodoReminder(url: string, note?: string): Promise<{ success: boolean }> {
+  const result = await chrome.storage.sync.get({ todoReminders: [] });
+  const todoReminders = result.todoReminders as TodoReminder[];
+
+  const reminder: TodoReminder = {
+    id: Date.now().toString(),
+    url,
+    hostname: new URL(url).hostname,
+    note,
+    timestamp: Date.now(),
+  };
+
+  todoReminders.unshift(reminder); // Add to beginning
+  await chrome.storage.sync.set({ todoReminders });
+
+  console.log('Added todo reminder:', reminder);
+  return { success: true };
+}
+
+async function removeTodoReminder(id: string): Promise<{ success: boolean }> {
+  const result = await chrome.storage.sync.get({ todoReminders: [] });
+  const todoReminders = result.todoReminders as TodoReminder[];
+
+  const filtered = todoReminders.filter(r => r.id !== id);
+  await chrome.storage.sync.set({ todoReminders: filtered });
+
+  console.log('Removed todo reminder:', id);
+  return { success: true };
 }

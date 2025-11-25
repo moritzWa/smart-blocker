@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
+import { X, Clock, Copy } from 'lucide-react';
 
 interface UnblockedSite {
   domain: string;
   expiryTime: number;
+}
+
+interface TodoReminder {
+  id: string;
+  url: string;
+  hostname: string;
+  note?: string;
+  timestamp: number;
 }
 
 export default function Options() {
@@ -11,10 +20,12 @@ export default function Options() {
   const [defaultMinutes, setDefaultMinutes] = useState(5);
   const [status, setStatus] = useState('');
   const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
+  const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
 
   useEffect(() => {
     loadSettings();
     loadUnblockedSites();
+    loadTodoReminders();
 
     // Update unblocked sites every 5 seconds
     const interval = setInterval(loadUnblockedSites, 5000);
@@ -35,7 +46,10 @@ export default function Options() {
 
   async function loadUnblockedSites() {
     const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
-    const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
+    const temporaryUnblocks = result.temporaryUnblocks as Record<
+      string,
+      number
+    >;
 
     const sites: UnblockedSite[] = [];
     const now = Date.now();
@@ -51,6 +65,11 @@ export default function Options() {
     setUnblockedSites(sites);
   }
 
+  async function loadTodoReminders() {
+    const result = await chrome.storage.sync.get({ todoReminders: [] });
+    setTodoReminders(result.todoReminders as TodoReminder[]);
+  }
+
   async function saveSettings() {
     const allowedSitesList = allowedSites.split('\n').filter((s) => s.trim());
     const blockedSitesList = blockedSites.split('\n').filter((s) => s.trim());
@@ -61,15 +80,57 @@ export default function Options() {
       defaultUnblockMinutes: defaultMinutes,
     });
 
+    // Notify service worker to check all open tabs
+    chrome.runtime.sendMessage({ type: 'SETTINGS_UPDATED' });
+
     setStatus('Settings saved!');
     setTimeout(() => setStatus(''), 1000);
   }
 
+  async function handleRemoveTodoReminder(id: string) {
+    await chrome.runtime.sendMessage({
+      type: 'REMOVE_TODO_REMINDER',
+      id,
+    });
+    loadTodoReminders();
+  }
+
+  async function handleOpenTodoUrl(url: string, id: string) {
+    // Remove reminder and open URL
+    await chrome.runtime.sendMessage({
+      type: 'REMOVE_TODO_REMINDER',
+      id,
+    });
+    window.open(url, '_blank');
+    loadTodoReminders();
+  }
+
+  async function handleCopyTodos() {
+    const todoText = todoReminders
+      .map((reminder) => {
+        const note = reminder.note ? ` ${reminder.note}` : '';
+        return `- [ ]${note} (${reminder.url})`;
+      })
+      .join('\n');
+
+    await navigator.clipboard.writeText(todoText);
+    setStatus('Copied to clipboard!');
+    setTimeout(() => setStatus(''), 2000);
+  }
+
+  function formatTimeAgo(timestamp: number): string {
+    const minutes = Math.floor((Date.now() - timestamp) / 60000);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  }
+
   function formatTimeRemaining(expiryTime: number): string {
     const remaining = Math.max(0, expiryTime - Date.now());
-    const minutes = Math.floor(remaining / 60000);
-    const seconds = Math.floor((remaining % 60000) / 1000);
-    return `${minutes}m ${seconds}s`;
+    const minutes = Math.ceil(remaining / 60000);
+    return `${minutes}m left`;
   }
 
   return (
@@ -79,9 +140,61 @@ export default function Options() {
           Smart Blocker Settings
         </h1>
 
+        {todoReminders.length > 0 && (
+          <section className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-700 mb-3">
+              To-Do Reminders
+            </h2>
+            <div className="space-y-3">
+              {todoReminders.map((reminder) => (
+                <div
+                  key={reminder.id}
+                  className="bg-white p-4 rounded-lg border border-purple-100 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() =>
+                          handleOpenTodoUrl(reminder.url, reminder.id)
+                        }
+                        className="font-mono text-sm text-blue-600 hover:text-blue-800 hover:underline text-left break-all"
+                      >
+                        {reminder.hostname}
+                      </button>
+                      {reminder.note && (
+                        <p className="text-gray-600 mt-1 text-sm">
+                          "{reminder.note}"
+                        </p>
+                      )}
+                      <p className="text-gray-400 text-xs mt-1">
+                        Added {formatTimeAgo(reminder.timestamp)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveTodoReminder(reminder.id)}
+                      className="text-gray-400 hover:text-red-600 flex-shrink-0 p-1 transition-colors cursor-pointer"
+                      title="Remove reminder"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleCopyTodos}
+              className="mt-4 w-full bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Copy size={16} />
+              Copy to Clipboard
+            </button>
+          </section>
+        )}
+
         {unblockedSites.length > 0 && (
           <section className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-700 mb-3">
+            <h2 className="text-xl font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Clock size={20} />
               Currently Unblocked Sites
             </h2>
             <div className="space-y-2">
@@ -90,7 +203,9 @@ export default function Options() {
                   key={domain}
                   className="flex justify-between items-center bg-white px-3 py-2 rounded border border-blue-100"
                 >
-                  <span className="font-mono text-sm text-gray-800">{domain}</span>
+                  <span className="font-mono text-sm text-gray-800">
+                    {domain}
+                  </span>
                   <span className="text-sm text-blue-600 font-medium">
                     {formatTimeRemaining(expiryTime)}
                   </span>

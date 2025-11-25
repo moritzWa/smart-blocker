@@ -31,13 +31,13 @@ Your job:
 1. Evaluate if their reason is legitimate and productive (e.g., work, marketplace, specific tasks)
 2. Reject entertainment, procrastination, or vague reasons
 3. Estimate realistic time needed (1-60 minutes)
-4. Keep reasoning VERY brief (under 20 words)
+4. Keep reasoning EXTREMELY brief (max 8 words, conversational tone)
 
 Examples:
-- "Check Facebook Marketplace for my listing replies" → VALID, 5 min, "Legitimate marketplace business"
-- "Need to watch a YouTube tutorial on React hooks" → VALID, 15 min, "Valid educational purpose"
-- "Just want to scroll TikTok" → INVALID, "Pure entertainment, not productive"
-- "Bored" → INVALID, "Not a valid reason"`,
+- "Check Facebook Marketplace for my listing replies" → VALID, 5 min, "Marketplace business, 5 min"
+- "Need to watch a YouTube tutorial on React hooks" → VALID, 15 min, "Educational, 15 min"
+- "Just want to scroll TikTok" → INVALID, "Pure entertainment"
+- "Bored" → INVALID, "Not valid"`,
       },
       {
         role: "user",
