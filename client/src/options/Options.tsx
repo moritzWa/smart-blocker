@@ -225,6 +225,43 @@ export default function Options() {
     setTimeout(() => setStatus(''), 2000);
   }
 
+  async function handleSeedTodos() {
+    const exampleTodos: TodoReminder[] = [
+      {
+        id: `seed-${Date.now()}-1`,
+        url: 'https://github.com/moritzWa/smart-blocker',
+        hostname: 'github.com',
+        note: 'Review pull requests',
+        timestamp: Date.now() - 3600000, // 1 hour ago
+      },
+      {
+        id: `seed-${Date.now()}-2`,
+        url: 'https://docs.google.com/document/d/example',
+        hostname: 'docs.google.com',
+        note: 'Finish project documentation',
+        timestamp: Date.now() - 7200000, // 2 hours ago
+      },
+      {
+        id: `seed-${Date.now()}-3`,
+        url: 'https://www.youtube.com/watch?v=example',
+        hostname: 'youtube.com',
+        note: 'Watch tutorial on React hooks',
+        timestamp: Date.now() - 1800000, // 30 minutes ago
+      },
+    ];
+
+    // Get existing todos and append seed todos
+    const result = await chrome.storage.sync.get({ todoReminders: [] });
+    const existingTodos = result.todoReminders as TodoReminder[];
+    const mergedTodos = [...existingTodos, ...exampleTodos];
+
+    await chrome.storage.sync.set({ todoReminders: mergedTodos });
+    loadTodoReminders();
+
+    setStatus('Seeded 3 example todos!');
+    setTimeout(() => setStatus(''), 2000);
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-10">
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
@@ -272,6 +309,12 @@ export default function Options() {
           </div>
         )}
 
+        <SiteBlockImport
+          show={showImport}
+          onToggle={() => setShowImport(!showImport)}
+          onImport={handleImport}
+        />
+
         <div className="mt-8 flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
           <a
             href="https://github.com/moritzWa/smart-blocker"
@@ -289,11 +332,18 @@ export default function Options() {
           >
             Review Extension
           </a>
-          <SiteBlockImport
-            show={showImport}
-            onToggle={() => setShowImport(!showImport)}
-            onImport={handleImport}
-          />
+          <button
+            onClick={() => setShowImport(!showImport)}
+            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
+          >
+            Import from SiteBlock
+          </button>
+          <button
+            onClick={handleSeedTodos}
+            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
+          >
+            Seed ToDos
+          </button>
         </div>
       </div>
     </div>
