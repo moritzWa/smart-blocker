@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { X, Clock, Copy } from 'lucide-react';
+import TodoRemindersList from './components/TodoRemindersList';
+import UnblockedSitesList from './components/UnblockedSitesList';
+import AllowOnlyModeToggle from './components/AllowOnlyModeToggle';
 
 interface UnblockedSite {
   domain: string;
@@ -158,102 +160,23 @@ export default function Options() {
           Smart Blocker Settings
         </h1>
 
-        {todoReminders.length > 0 && (
-          <section className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">
-              To-Do Reminders
-            </h2>
-            <div className="space-y-3">
-              {todoReminders.map((reminder) => (
-                <div
-                  key={reminder.id}
-                  className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-purple-100 dark:border-purple-800 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <button
-                        onClick={() =>
-                          handleOpenTodoUrl(reminder.url, reminder.id)
-                        }
-                        className="font-mono text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline text-left break-all"
-                      >
-                        {reminder.hostname}
-                      </button>
-                      {reminder.note && (
-                        <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">
-                          "{reminder.note}"
-                        </p>
-                      )}
-                      <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                        Added {formatTimeAgo(reminder.timestamp)}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveTodoReminder(reminder.id)}
-                      className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 flex-shrink-0 p-1 transition-colors cursor-pointer"
-                      title="Remove reminder"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleCopyTodos}
-              className="mt-4 w-full bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Copy size={16} />
-              Copy to Clipboard
-            </button>
-          </section>
-        )}
+        <TodoRemindersList
+          todoReminders={todoReminders}
+          onRemove={handleRemoveTodoReminder}
+          onOpen={handleOpenTodoUrl}
+          onCopy={handleCopyTodos}
+          formatTimeAgo={formatTimeAgo}
+        />
 
-        {unblockedSites.length > 0 && (
-          <section className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-              <Clock size={20} />
-              Currently Unblocked Sites
-            </h2>
-            <div className="space-y-2">
-              {unblockedSites.map(({ domain, expiryTime }) => (
-                <div
-                  key={domain}
-                  className="flex justify-between items-center bg-white dark:bg-gray-700 px-3 py-2 rounded border border-blue-100 dark:border-blue-800"
-                >
-                  <span className="font-mono text-sm text-gray-800 dark:text-gray-200">
-                    {domain}
-                  </span>
-                  <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                    {formatTimeRemaining(expiryTime)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <UnblockedSitesList
+          unblockedSites={unblockedSites}
+          formatTimeRemaining={formatTimeRemaining}
+        />
 
-        <section className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-1">
-                Allow-Only Mode
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Block all sites except those in the allowed list
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={allowOnlyMode}
-                onChange={(e) => setAllowOnlyMode(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
-            </label>
-          </div>
-        </section>
+        <AllowOnlyModeToggle
+          allowOnlyMode={allowOnlyMode}
+          onChange={setAllowOnlyMode}
+        />
 
         <section className="mb-6">
           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
