@@ -109,10 +109,14 @@ export default function BlockedPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center font-sans">
       <div className="text-center max-w-2xl px-10 py-12">
-        <div className="text-7xl mb-6">🚫</div>
+        <img
+          src="/logo.png"
+          alt="AI Site Blocker"
+          className="w-32 h-32 mx-auto mb-6"
+        />
 
         <h1 className="text-5xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-          Smart Blocker - Blocked
+          AI Site Blocker - Blocked
         </h1>
 
         <p className="text-2xl text-gray-600 dark:text-gray-400 mb-10">

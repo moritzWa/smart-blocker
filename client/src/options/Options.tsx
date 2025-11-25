@@ -265,9 +265,16 @@ export default function Options() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-10">
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-          Smart Blocker Settings
-        </h1>
+        <div className="flex items-center gap-4 mb-6">
+          <img
+            src="/logo.png"
+            alt="AI Site Blocker"
+            className="w-12 h-12"
+          />
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+            AI Site Blocker Settings
+          </h1>
+        </div>
 
         <TodoRemindersList
           todoReminders={todoReminders}
@@ -300,7 +307,7 @@ export default function Options() {
           description="One site per line. These sites will be blocked."
           value={blockedSites}
           onChange={setBlockedSites}
-          placeholder="https://www.youtube.com/&#10;https://www.tiktok.com/&#10;https://www.facebook.com/"
+          placeholder="youtube.com&#10;tiktok.com&#10;facebook.com"
         />
 
         {status && (
@@ -325,7 +332,8 @@ export default function Options() {
             Contribute on GitHub
           </a>
           <a
-            href="moritzw.com"
+            // TODO: Add link to extension review page once submitted and accepted
+            href="https://moritzw.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"

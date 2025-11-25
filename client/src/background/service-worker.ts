@@ -2,7 +2,7 @@ import { checkIfBlocked, normalizeUrl } from './utils/blocking';
 import { validateUnblockReason } from './services/ai-validation';
 import { unblockSite, addTodoReminder, removeTodoReminder } from './services/storage';
 
-console.log('Smart Blocker service worker loaded');
+console.log('AI Site Blocker service worker loaded');
 
 // Open options page when extension icon is clicked
 chrome.action.onClicked.addListener(() => {

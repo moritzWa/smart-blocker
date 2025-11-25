@@ -1,6 +1,6 @@
-# Smart Blocker - Chrome Extension
+# AI Site Blocker - Chrome Extension
 
-React + TypeScript Chrome extension for blocking distracting websites.
+AI-powered Chrome extension for intelligently blocking distracting websites with time-boxed unblocks.
 
 ## Development
 
