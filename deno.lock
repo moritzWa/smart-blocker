@@ -2,11 +2,13 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/dotenv@*": "0.225.5",
+    "jsr:@std/dotenv@~0.225.5": "0.225.5",
     "npm:@tailwindcss/postcss@^4.1.17": "4.1.17",
     "npm:@types/chrome@~0.1.31": "0.1.31",
     "npm:@types/react-dom@^19.2.3": "19.2.3_@types+react@19.2.7",
     "npm:@types/react@^19.2.7": "19.2.7",
     "npm:@vitejs/plugin-react@^5.1.1": "5.1.1_vite@7.2.4__picomatch@4.0.3__yaml@2.8.1_@babel+core@7.28.5",
+    "npm:lucide-react@0.554": "0.554.0_react@19.2.0",
     "npm:openai@4.73.0": "4.73.0_zod@3.23.8",
     "npm:react-dom@^19.2.0": "19.2.0_react@19.2.0",
     "npm:react@^19.2.0": "19.2.0",
@@ -1447,6 +1449,12 @@
         "yallist"
       ]
     },
+    "lucide-react@0.554.0_react@19.2.0": {
+      "integrity": "sha512-St+z29uthEJVx0Is7ellNkgTEhaeSoA42I7JjOCBCrc5X6LYMGSv0P/2uS5HDLTExP5tpiqRD2PyUEOS6s9UXA==",
+      "dependencies": [
+        "react"
+      ]
+    },
     "magic-string@0.30.21": {
       "integrity": "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==",
       "dependencies": [
@@ -2125,6 +2133,7 @@
             "npm:@types/react-dom@^19.2.3",
             "npm:@types/react@^19.2.7",
             "npm:@vitejs/plugin-react@^5.1.1",
+            "npm:lucide-react@0.554",
             "npm:react-dom@^19.2.0",
             "npm:react@^19.2.0",
             "npm:typescript@~5.9.3",
@@ -2135,6 +2144,7 @@
       },
       "server": {
         "dependencies": [
+          "jsr:@std/dotenv@~0.225.5",
           "npm:openai@4.73.0",
           "npm:zod@3.23.8"
         ]

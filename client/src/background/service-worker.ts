@@ -4,6 +4,13 @@ console.log('Smart Blocker service worker loaded');
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   // Only check when URL actually changes
   if (changeInfo.url && tab.url) {
+    // Skip chrome:// URLs and extension pages
+    if (tab.url.startsWith('chrome://') ||
+        tab.url.startsWith('chrome-extension://') ||
+        tab.url.includes('blocked.html')) {
+      return;
+    }
+
     const result = await checkIfBlocked(tab.url);
     if (result.blocked) {
       const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
@@ -17,8 +24,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   const tab = await chrome.tabs.get(activeInfo.tabId);
   if (tab.url) {
+    // Skip chrome:// URLs and extension pages
+    if (tab.url.startsWith('chrome://') ||
+        tab.url.startsWith('chrome-extension://') ||
+        tab.url.includes('blocked.html')) {
+      return;
+    }
+
     const result = await checkIfBlocked(tab.url);
-    if (result.blocked && !tab.url.includes('blocked.html')) {
+    if (result.blocked) {
       const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
         '?url=' + encodeURIComponent(tab.url);
       chrome.tabs.update(activeInfo.tabId, { url: blockPageUrl });
@@ -114,6 +128,8 @@ async function checkIfBlocked(url: string): Promise<{ blocked: boolean }> {
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
   const allowOnlyMode = result.allowOnlyMode as boolean;
 
+  console.log('🔍 Checking:', domain, { allowOnlyMode, allowedSites, blockedSites });
+
   // Check if temporarily unblocked
   if (temporaryUnblocks[domain]) {
     const expiryTime = temporaryUnblocks[domain];
@@ -208,7 +224,14 @@ async function checkAllOpenTabs(): Promise<{ success: boolean }> {
   const tabs = await chrome.tabs.query({});
 
   for (const tab of tabs) {
-    if (tab.id && tab.url && !tab.url.includes('blocked.html')) {
+    if (tab.id && tab.url) {
+      // Skip chrome:// URLs and extension pages
+      if (tab.url.startsWith('chrome://') ||
+          tab.url.startsWith('chrome-extension://') ||
+          tab.url.includes('blocked.html')) {
+        continue;
+      }
+
       const result = await checkIfBlocked(tab.url);
       if (result.blocked) {
         const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +

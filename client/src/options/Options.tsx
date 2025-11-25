@@ -77,12 +77,23 @@ export default function Options() {
     const allowedSitesList = allowedSites.split('\n').filter((s) => s.trim());
     const blockedSitesList = blockedSites.split('\n').filter((s) => s.trim());
 
+    console.log('💾 Saving settings:', {
+      allowedSitesList,
+      blockedSitesList,
+      defaultMinutes,
+      allowOnlyMode
+    });
+
     await chrome.storage.sync.set({
       allowedSites: allowedSitesList,
       blockedSites: blockedSitesList,
       defaultUnblockMinutes: defaultMinutes,
       allowOnlyMode,
     });
+
+    // Verify what was actually saved
+    const verification = await chrome.storage.sync.get(['allowOnlyMode']);
+    console.log('✅ Verified stored value:', verification);
 
     // Notify service worker to check all open tabs
     chrome.runtime.sendMessage({ type: 'SETTINGS_UPDATED' });
