@@ -129,7 +129,7 @@ export default function Options() {
   }
 
   async function handleOpenTodoUrl(url: string, id: string) {
-    // Remove reminder and open URL
+    // Remove todo reminder and open URL
     await chrome.runtime.sendMessage({
       type: 'REMOVE_TODO_REMINDER',
       id,
@@ -229,24 +229,31 @@ export default function Options() {
     const exampleTodos: TodoReminder[] = [
       {
         id: `seed-${Date.now()}-1`,
-        url: 'https://github.com/moritzWa/smart-blocker',
-        hostname: 'github.com',
-        note: 'Review pull requests',
-        timestamp: Date.now() - 3600000, // 1 hour ago
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        hostname: 'youtube.com',
+        note: 'Check out that video Sarah recommended',
+        timestamp: Date.now() - 2700000, // 45 minutes ago
       },
       {
         id: `seed-${Date.now()}-2`,
-        url: 'https://docs.google.com/document/d/example',
-        hostname: 'docs.google.com',
-        note: 'Finish project documentation',
-        timestamp: Date.now() - 7200000, // 2 hours ago
+        url: 'https://x.com/naval/status/1234567890',
+        hostname: 'x.com',
+        note: 'Read Twitter thread about productivity',
+        timestamp: Date.now() - 5400000, // 90 minutes ago
       },
       {
         id: `seed-${Date.now()}-3`,
-        url: 'https://www.youtube.com/watch?v=example',
-        hostname: 'youtube.com',
-        note: 'Watch tutorial on React hooks',
+        url: 'https://www.linkedin.com/feed/',
+        hostname: 'linkedin.com',
+        note: 'Reply to Mike\'s message',
         timestamp: Date.now() - 1800000, // 30 minutes ago
+      },
+      {
+        id: `seed-${Date.now()}-4`,
+        url: 'https://www.reddit.com/r/webdev/comments/example',
+        hostname: 'reddit.com',
+        note: 'Check that Next.js discussion',
+        timestamp: Date.now() - 7200000, // 2 hours ago
       },
     ];
 

@@ -4,12 +4,15 @@ export interface AIResponse {
   reasoning: string;
 }
 
+const VALIDATION_SERVICE_URL =
+  'https://smart-blocker.moritzwa.deno.net/validate';
+
 export async function validateUnblockReason(
   hostname: string,
   reason: string
 ): Promise<AIResponse | { error: string }> {
   try {
-    const response = await fetch('http://localhost:8000/validate', {
+    const response = await fetch(VALIDATION_SERVICE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hostname, reason }),

@@ -4,6 +4,58 @@ import { unblockSite, addTodoReminder, removeTodoReminder } from './services/sto
 
 console.log('AI Site Blocker service worker loaded');
 
+// Set up default sites on first install or if storage is empty
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === 'install') {
+    await initializeDefaultSites();
+  }
+});
+
+// Also check on startup in case storage was cleared
+chrome.runtime.onStartup.addListener(async () => {
+  const result = await chrome.storage.sync.get(['allowedSites', 'blockedSites']);
+  if (!result.allowedSites && !result.blockedSites) {
+    await initializeDefaultSites();
+  }
+});
+
+async function initializeDefaultSites() {
+  const defaultAllowedSites = [
+    'remnote.com',
+    'calendar.google.com',
+    'track.toggl.com',
+    'claude.ai',
+    'soundcloud.com',
+    'pomofocus.io',
+    'cronometer.com',
+    'developer.mozilla.org',
+    'stackoverflow.com',
+    'google.com/search',
+    'localhost',
+  ];
+
+  const defaultBlockedSites = [
+    'tiktok.com',
+    'linkedin.com',
+    'instagram.com',
+    'x.com',
+    'facebook.com',
+    'news.google.com',
+    'google.com/search?q=news',
+    'youtube.com',
+    'photos.google.com',
+    'substack.com',
+  ];
+
+  await chrome.storage.sync.set({
+    allowedSites: defaultAllowedSites,
+    blockedSites: defaultBlockedSites,
+    allowOnlyMode: false,
+  });
+
+  console.log('✅ Initialized default sites');
+}
+
 // Open options page when extension icon is clicked
 chrome.action.onClicked.addListener(() => {
   chrome.runtime.openOptionsPage();
@@ -49,7 +101,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'CHECK_BLOCKED') {
     checkIfBlocked(message.url).then(sendResponse);
     return true; // Required for async response

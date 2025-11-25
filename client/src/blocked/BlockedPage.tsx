@@ -194,7 +194,7 @@ export default function BlockedPage() {
                       onClick={handleSaveTodoReminder}
                       className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
                     >
-                      Save Reminder
+                      Save Todo Reminder
                     </button>
                     <button
                       onClick={() => setShowTodoInput(false)}
