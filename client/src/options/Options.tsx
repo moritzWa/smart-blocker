@@ -81,7 +81,7 @@ export default function Options() {
       allowedSitesList,
       blockedSitesList,
       defaultMinutes,
-      allowOnlyMode
+      allowOnlyMode,
     });
 
     await chrome.storage.sync.set({
@@ -309,12 +309,14 @@ export default function Options() {
         </button>
 
         {status && (
-          <span className="ml-4 text-green-600 dark:text-green-400 font-medium">{status}</span>
+          <span className="ml-4 text-green-600 dark:text-green-400 font-medium">
+            {status}
+          </span>
         )}
 
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
           <a
-            href="https://github.com/yourusername/smart-blocker"
+            href="https://github.com/moritzWa/smart-blocker"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
