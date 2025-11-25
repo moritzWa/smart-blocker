@@ -5,8 +5,6 @@
   "description": "Block distracting websites with temporary unblock functionality",
   "permissions": [
     "storage",
-    "alarms",
-    "scripting",
     "tabs"
   ],
   "host_permissions": [
@@ -16,21 +14,8 @@
     "service_worker": "src/background/service-worker.ts",
     "type": "module"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["src/content/content-script.tsx"],
-      "run_at": "document_idle"
-    }
-  ],
   "options_page": "src/options/options.html",
   "action": {
     "default_title": "Smart Blocker"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["index.css"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }

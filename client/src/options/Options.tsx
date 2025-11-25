@@ -28,8 +28,11 @@ export default function Options() {
     loadUnblockedSites();
     loadTodoReminders();
 
-    // Update unblocked sites every 5 seconds
-    const interval = setInterval(loadUnblockedSites, 5000);
+    // Update both unblocked sites and todo reminders every 5 seconds
+    const interval = setInterval(() => {
+      loadUnblockedSites();
+      loadTodoReminders();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 

@@ -231,10 +231,14 @@ export default function BlockedPage() {
               ) : (
                 <>
                   <button
-                    onClick={handleReset}
+                    onClick={() => {
+                      setTodoNote(reason); // Auto-fill with original reason
+                      setShowTodoInput(true);
+                      setAiResponse(null); // Hide AI response
+                    }}
                     className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
                   >
-                    Try Different Reason
+                    Add to To-Do List
                   </button>
                   <button
                     onClick={() => window.history.back()}
