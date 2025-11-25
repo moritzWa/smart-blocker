@@ -75,11 +75,8 @@ function normalizeUrl(url: string): string {
 }
 
 function matchesDomain(domain: string, pattern: string): boolean {
-  // Remove + prefix if present (for allowed sites)
-  const cleanPattern = pattern.startsWith('+') ? pattern.substring(1) : pattern;
-
   // Remove protocol and www from pattern
-  let cleanDomain = cleanPattern
+  let cleanDomain = pattern
     .replace(/^https?:\/\//, '')
     .replace(/^www\./, '')
     .replace(/\/$/, '');
@@ -109,19 +106,13 @@ async function checkIfBlocked(url: string): Promise<{ blocked: boolean }> {
     allowedSites: [],
     blockedSites: [],
     temporaryUnblocks: {},
+    allowOnlyMode: false,
   });
 
   const allowedSites = result.allowedSites as string[];
   const blockedSites = result.blockedSites as string[];
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
-
-  // Check if allowed (allowed sites always win)
-  for (const pattern of allowedSites) {
-    if (matchesDomain(domain, pattern)) {
-      console.log(`✓ Allowed: ${domain} matches ${pattern}`);
-      return { blocked: false };
-    }
-  }
+  const allowOnlyMode = result.allowOnlyMode as boolean;
 
   // Check if temporarily unblocked
   if (temporaryUnblocks[domain]) {
@@ -138,16 +129,36 @@ async function checkIfBlocked(url: string): Promise<{ blocked: boolean }> {
     }
   }
 
-  // Check if blocked
-  for (const pattern of blockedSites) {
-    if (matchesDomain(domain, pattern)) {
-      console.log(`🚫 Blocked: ${domain} matches ${pattern}`);
+  // Check if in allowed list
+  const isAllowed = allowedSites.some(pattern => matchesDomain(domain, pattern));
+
+  if (allowOnlyMode) {
+    // Allow-Only Mode: Block everything EXCEPT allowed sites
+    if (isAllowed) {
+      console.log(`✓ Allowed in Allow-Only Mode: ${domain}`);
+      return { blocked: false };
+    } else {
+      console.log(`🚫 Blocked in Allow-Only Mode: ${domain}`);
       return { blocked: true };
     }
-  }
+  } else {
+    // Normal Mode: Only block sites in blocklist
+    if (isAllowed) {
+      console.log(`✓ Allowed: ${domain}`);
+      return { blocked: false };
+    }
 
-  // Not in any list, allow
-  return { blocked: false };
+    // Check if blocked
+    for (const pattern of blockedSites) {
+      if (matchesDomain(domain, pattern)) {
+        console.log(`🚫 Blocked: ${domain} matches ${pattern}`);
+        return { blocked: true };
+      }
+    }
+
+    // Not in any list, allow
+    return { blocked: false };
+  }
 }
 
 async function unblockSite(domain: string, minutes: number): Promise<{ success: boolean }> {

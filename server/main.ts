@@ -1,4 +1,4 @@
-import "jsr:@std/dotenv/load";
+import "@std/dotenv/load";
 import { z } from "zod";
 import { zodResponseFormat } from "openai/helpers/zod";
 import OpenAI from "openai";

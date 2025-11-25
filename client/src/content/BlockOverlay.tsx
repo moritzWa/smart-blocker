@@ -87,16 +87,14 @@ export default function BlockOverlay({
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                placeholder="e.g., Check Facebook Marketplace listings..."
+                placeholder="Check FB Marketplace.."
                 className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500"
                 style={{ display: 'block' }}
                 disabled={loading}
               />
             </div>
 
-            {error && (
-              <p className="text-red-600 mb-4">{error}</p>
-            )}
+            {error && <p className="text-red-600 mb-4">{error}</p>}
 
             <div className="flex gap-4 justify-center">
               <button
