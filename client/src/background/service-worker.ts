@@ -4,6 +4,11 @@ import { unblockSite, addTodoReminder, removeTodoReminder } from './services/sto
 
 console.log('Smart Blocker service worker loaded');
 
+// Open options page when extension icon is clicked
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage();
+});
+
 // Listen for tab updates and block instantly
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   // Only check when URL actually changes

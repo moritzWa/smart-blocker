@@ -28,51 +28,59 @@ export default function TodoRemindersList({
   }
 
   return (
-    <section className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3">
-        To-Do Reminders
-      </h2>
-      <div className="space-y-3">
+    <section className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+          To-Do Reminders
+        </h2>
+        <button
+          onClick={onCopy}
+          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+          title="Copy to clipboard"
+        >
+          <Copy size={14} />
+          Copy
+        </button>
+      </div>
+      <div className="space-y-2">
         {todoReminders.map((reminder) => (
           <div
             key={reminder.id}
-            className="bg-white dark:bg-gray-700 p-4 rounded-lg border border-purple-100 dark:border-purple-800 shadow-sm"
+            className="flex items-start gap-3 group hover:bg-gray-50 dark:hover:bg-gray-800/50 -mx-2 px-2 py-2 rounded transition-colors"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <button
-                  onClick={() => onOpen(reminder.url, reminder.id)}
-                  className="font-mono text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline text-left break-all"
-                >
-                  {reminder.hostname}
-                </button>
-                {reminder.note && (
-                  <p className="text-gray-600 dark:text-gray-300 mt-1 text-sm">
-                    "{reminder.note}"
-                  </p>
+            <button
+              onClick={() => onOpen(reminder.url, reminder.id)}
+              className="flex-1 min-w-0 text-left"
+            >
+              <div className="flex items-baseline gap-2">
+                <span className="text-gray-400 dark:text-gray-500">□</span>
+                {reminder.note ? (
+                  <span className="text-gray-700 dark:text-gray-200 text-sm">
+                    {reminder.note}
+                  </span>
+                ) : (
+                  <span className="font-mono text-sm text-gray-700 dark:text-gray-200 break-all">
+                    {reminder.hostname}
+                  </span>
                 )}
-                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                  Added {formatTimeAgo(reminder.timestamp)}
-                </p>
               </div>
-              <button
-                onClick={() => onRemove(reminder.id)}
-                className="text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 shrink-0 p-1 transition-colors cursor-pointer"
-                title="Remove reminder"
-              >
-                <X size={18} />
-              </button>
-            </div>
+              <div className="ml-6 mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                {reminder.note && (
+                  <span className="font-mono">{reminder.hostname} • </span>
+                )}
+                {formatTimeAgo(reminder.timestamp)}
+              </div>
+            </button>
+            <button
+              onClick={() => onRemove(reminder.id)}
+              className="opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 shrink-0 transition-all cursor-pointer"
+              title="Remove"
+            >
+              <X size={16} />
+            </button>
           </div>
         ))}
       </div>
-      <button
-        onClick={onCopy}
-        className="mt-4 w-full bg-purple-100 dark:bg-purple-900/40 hover:bg-purple-200 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
-      >
-        <Copy size={16} />
-        Copy to Clipboard
-      </button>
     </section>
   );
 }

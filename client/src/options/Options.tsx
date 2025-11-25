@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import TodoRemindersList from './components/TodoRemindersList';
 import UnblockedSitesList from './components/UnblockedSitesList';
 import AllowOnlyModeToggle from './components/AllowOnlyModeToggle';
+import SiteListInput from './components/SiteListInput';
+import SiteBlockImport from './components/SiteBlockImport';
 
 interface UnblockedSite {
   domain: string;
@@ -23,6 +25,7 @@ export default function Options() {
   const [status, setStatus] = useState('');
   const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
   const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -163,6 +166,65 @@ export default function Options() {
     return `${minutes}m left`;
   }
 
+  function parseSiteBlockFormat(text: string): {
+    allowedSites: string[];
+    blockedSites: string[];
+    allowOnlyMode: boolean;
+  } {
+    const lines = text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l);
+    const allowedSites: string[] = [];
+    const blockedSites: string[] = [];
+    let allowOnlyMode = false;
+
+    // Check if first line is '*' (Allow-Only Mode)
+    if (lines[0] === '*') {
+      allowOnlyMode = true;
+      lines.shift(); // Remove the '*' line
+    }
+
+    for (const line of lines) {
+      if (line.startsWith('+')) {
+        // Allowed site - strip the '+' prefix
+        const site = line.substring(1).trim();
+        if (site) allowedSites.push(site);
+      } else if (line !== '*') {
+        // Blocked site
+        blockedSites.push(line);
+      }
+    }
+
+    return { allowedSites, blockedSites, allowOnlyMode };
+  }
+
+  function handleImport(importText: string) {
+    const parsed = parseSiteBlockFormat(importText);
+
+    // Merge with existing settings (avoid duplicates)
+    const existingAllowed = allowedSites.split('\n').filter((s) => s.trim());
+    const existingBlocked = blockedSites.split('\n').filter((s) => s.trim());
+
+    const mergedAllowed = [
+      ...new Set([...existingAllowed, ...parsed.allowedSites]),
+    ];
+    const mergedBlocked = [
+      ...new Set([...existingBlocked, ...parsed.blockedSites]),
+    ];
+
+    setAllowedSites(mergedAllowed.join('\n'));
+    setBlockedSites(mergedBlocked.join('\n'));
+    if (parsed.allowOnlyMode) {
+      setAllowOnlyMode(true);
+    }
+
+    // Clear import UI
+    setShowImport(false);
+    setStatus('Imported successfully!');
+    setTimeout(() => setStatus(''), 2000);
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-10">
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
@@ -183,41 +245,26 @@ export default function Options() {
           formatTimeRemaining={formatTimeRemaining}
         />
 
-        <section className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            Always Allowed Sites
-          </h2>
-          <AllowOnlyModeToggle
-            allowOnlyMode={allowOnlyMode}
-            onChange={setAllowOnlyMode}
-          />
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            One site per line. These sites will never be blocked.
-          </p>
-          <textarea
-            value={allowedSites}
-            onChange={(e) => setAllowedSites(e.target.value)}
-            rows={5}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-            placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
-          />
-        </section>
+        <AllowOnlyModeToggle
+          allowOnlyMode={allowOnlyMode}
+          onChange={setAllowOnlyMode}
+        />
 
-        <section className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">
-            Blocked Sites
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            One site per line. These sites will be blocked.
-          </p>
-          <textarea
-            value={blockedSites}
-            onChange={(e) => setBlockedSites(e.target.value)}
-            rows={5}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-            placeholder="https://www.youtube.com/&#10;https://www.tiktok.com/&#10;https://www.facebook.com/"
-          />
-        </section>
+        <SiteListInput
+          label="Always Allowed Sites"
+          description="One site per line. These sites will never be blocked."
+          value={allowedSites}
+          onChange={setAllowedSites}
+          placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
+        />
+
+        <SiteListInput
+          label="Blocked Sites"
+          description="One site per line. These sites will be blocked."
+          value={blockedSites}
+          onChange={setBlockedSites}
+          placeholder="https://www.youtube.com/&#10;https://www.tiktok.com/&#10;https://www.facebook.com/"
+        />
 
         {status && (
           <div className="mb-6 text-green-600 dark:text-green-400 font-medium text-sm">
@@ -242,6 +289,11 @@ export default function Options() {
           >
             Review Extension
           </a>
+          <SiteBlockImport
+            show={showImport}
+            onToggle={() => setShowImport(!showImport)}
+            onImport={handleImport}
+          />
         </div>
       </div>
     </div>
