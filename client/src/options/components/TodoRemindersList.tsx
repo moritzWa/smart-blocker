@@ -30,12 +30,12 @@ export default function TodoRemindersList({
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+        <h2 className="text-xl font-semibold text-foreground">
           To-Do Reminders
         </h2>
         <button
           onClick={onCopy}
-          className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
           title="Copy to clipboard"
         >
           <Copy size={14} />
@@ -46,25 +46,25 @@ export default function TodoRemindersList({
         {todoReminders.map((reminder) => (
           <div
             key={reminder.id}
-            className="flex items-start gap-3 group hover:bg-gray-50 dark:hover:bg-gray-800/50 -mx-2 px-2 py-2 rounded transition-colors"
+            className="flex items-start gap-3 group hover:bg-muted -mx-2 px-2 py-2 rounded transition-colors"
           >
             <button
               onClick={() => onOpen(reminder.url, reminder.id)}
-              className="flex-1 min-w-0 text-left"
+              className="flex-1 min-w-0 text-left cursor-pointer group/item"
             >
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-400 dark:text-gray-500">□</span>
+                <span className="text-muted-foreground">□</span>
                 {reminder.note ? (
-                  <span className="text-gray-700 dark:text-gray-200 text-sm">
+                  <span className="text-foreground text-sm group-hover/item:text-primary transition-colors">
                     {reminder.note}
                   </span>
                 ) : (
-                  <span className="font-mono text-sm text-gray-700 dark:text-gray-200 break-all">
+                  <span className="font-mono text-sm text-foreground group-hover/item:text-primary break-all transition-colors">
                     {reminder.hostname}
                   </span>
                 )}
               </div>
-              <div className="ml-6 mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+              <div className="ml-6 mt-0.5 text-xs text-muted-foreground">
                 {reminder.note && (
                   <span className="font-mono">{reminder.hostname} • </span>
                 )}
@@ -73,7 +73,7 @@ export default function TodoRemindersList({
             </button>
             <button
               onClick={() => onRemove(reminder.id)}
-              className="opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 shrink-0 transition-all cursor-pointer"
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0 transition-all cursor-pointer"
               title="Remove"
             >
               <X size={16} />
