@@ -289,7 +289,6 @@ export default function Options() {
           onRemove={handleRemoveTodoReminder}
           onOpen={handleOpenTodoUrl}
           onCopy={handleCopyTodos}
-          formatTimeAgo={formatTimeAgo}
         />
 
         <UnblockedSitesList

@@ -14,7 +14,6 @@ interface TodoRemindersListProps {
   onRemove: (id: string) => void;
   onOpen: (url: string, id: string) => void;
   onCopy: () => void;
-  formatTimeAgo: (timestamp: number) => string;
 }
 
 export default function TodoRemindersList({
@@ -22,11 +21,20 @@ export default function TodoRemindersList({
   onRemove,
   onOpen,
   onCopy,
-  formatTimeAgo,
 }: TodoRemindersListProps) {
   if (todoReminders.length === 0) {
     return null;
   }
+
+  // Helper to format URL like in BlockedPage
+  const formatDisplayUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname + urlObj.pathname + urlObj.search;
+    } catch {
+      return url;
+    }
+  };
 
   return (
     <section className="mb-6">
@@ -45,47 +53,49 @@ export default function TodoRemindersList({
         </Button>
       </div>
       <div className="space-y-2">
-        {todoReminders.map((reminder) => (
-          <div
-            key={reminder.id}
-            className="flex items-start gap-3 group hover:bg-muted px-2 py-2 rounded-lg transition-colors"
-          >
-            <div
-              onClick={() => onOpen(reminder.url, reminder.id)}
-              className="flex-1 min-w-0 text-left h-auto p-0 hover:bg-transparent group/item cursor-pointer justify-between"
-            >
-              <div className="flex items-baseline gap-2">
-                <span className="text-muted-foreground">□</span>
-                {reminder.note ? (
-                  <span className="text-foreground text-sm group-hover/item:text-primary transition-colors">
-                    {reminder.note}
-                  </span>
-                ) : (
-                  <span className="font-mono text-sm text-foreground group-hover/item:text-primary break-all transition-colors">
-                    {reminder.url}
-                  </span>
-                )}
+        {todoReminders.map((reminder) => {
+          const displayUrl = formatDisplayUrl(reminder.url);
 
-                <div className="ml-6 mt-0.5 text-xs text-muted-foreground">
-                  {reminder.note && (
-                    <span className="font-mono">{reminder.url} • </span>
+          return (
+            <div
+              key={reminder.id}
+              className="flex items-start gap-3 group hover:bg-muted px-2 py-2 rounded-lg transition-colors"
+            >
+              <div
+                onClick={() => onOpen(reminder.url, reminder.id)}
+                className="flex-1 min-w-0 text-left h-auto p-0 hover:bg-transparent group/item cursor-pointer"
+              >
+                <div className="flex items-baseline gap-2">
+                  <span className="text-muted-foreground shrink-0">□</span>
+                  {reminder.note ? (
+                    <>
+                      <span className="text-foreground text-sm group-hover/item:text-primary transition-colors max-w-[50%] truncate">
+                        {reminder.note}
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground truncate">
+                        {displayUrl}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="font-mono text-sm text-foreground group-hover/item:text-primary truncate transition-colors">
+                      {displayUrl}
+                    </span>
                   )}
-                  {formatTimeAgo(reminder.timestamp)}
                 </div>
               </div>
-            </div>
 
-            <Button
-              onClick={() => onRemove(reminder.id)}
-              variant="ghost"
-              size="icon"
-              className="opacity-0 group-hover:opacity-100 h-6 w-6"
-              title="Remove"
-            >
-              <X size={16} />
-            </Button>
-          </div>
-        ))}
+              <Button
+                onClick={() => onRemove(reminder.id)}
+                variant="ghost"
+                size="icon"
+                className="opacity-0 group-hover:opacity-100 h-6 w-6 shrink-0"
+                title="Remove"
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
