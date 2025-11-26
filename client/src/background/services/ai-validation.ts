@@ -1,7 +1,7 @@
 export interface AIResponse {
   valid: boolean;
   seconds: number;
-  reasoning: string;
+  message: string;
 }
 
 const VALIDATION_SERVICE_URL =
