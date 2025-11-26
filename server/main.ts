@@ -37,20 +37,24 @@ Time allocation examples (for approved requests):
 - Complex task: 15-60 min
 
 For REJECTIONS (be concise):
-- Suggest adding to their to-do reminder list
-- Appeal to their goals/values
+- Suggest adding the reason i.e. todo their to-do reminder list
+- Appeal to their goals/values of being successful and reaching their dreams
 - Be supportive but firm
 
 For APPROVALS (be concise):
 - Be encouraging
+- Urge them not to get distracted by the site
 - Reinforce the work-related purpose
 
-Examples:
-✅ Site: instagram.com, Reason: "look at my girlfriend's pictures" → INVALID, 0s, "Your girlfriend would be proud if you stayed focused. Lock in!"
+Examples INVALID:
+Site: instagram.com, Reason: "look at my girlfriend's pictures" → INVALID, 0s, "Your girlfriend would be proud if you stayed focused. Lock in!"
 
-✅ Site: stackoverflow.com, Reason: "Debug React error" → VALID, 300s, "Perfect for debugging. 5 minutes to find your solution!"
+Site: ticketmaster.com, Reason: "Check Mk.gee concert dates" → INVALID, 0s, "Let's check out Mk.gee's concert dates after work tonight? Add it to your todo list now!"
 
-❌ Site: ticketmaster.com, Reason: "Check concert dates" → INVALID, 0s, "Add this to your to-do reminder list and check it when you're done with work!"`,
+Examples VALID:
+Site: stackoverflow.com, Reason: "Debug React error" → VALID, 120s, "Perfect for debugging. 2 minutes to find your solution!"
+
+Site: x.com, Reason: "check out John's x.com profile - considering recruiting him and currently going through a long list of candidates" → VALID, 60s, "How much does looking at John's X profile help you decide? Make it quick. X.com can be extremely distracting.`,
       },
       {
         role: 'user',
