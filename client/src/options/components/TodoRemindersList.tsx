@@ -1,4 +1,5 @@
 import { X, Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TodoReminder {
   id: string;
@@ -33,14 +34,15 @@ export default function TodoRemindersList({
         <h2 className="text-xl font-semibold text-foreground">
           To-Do Reminders
         </h2>
-        <button
+        <Button
           onClick={onCopy}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
+          variant="ghost"
+          size="sm"
           title="Copy to clipboard"
         >
           <Copy size={14} />
           Copy
-        </button>
+        </Button>
       </div>
       <div className="space-y-2">
         {todoReminders.map((reminder) => (
@@ -48,9 +50,10 @@ export default function TodoRemindersList({
             key={reminder.id}
             className="flex items-start gap-3 group hover:bg-muted -mx-2 px-2 py-2 rounded transition-colors"
           >
-            <button
+            <Button
               onClick={() => onOpen(reminder.url, reminder.id)}
-              className="flex-1 min-w-0 text-left cursor-pointer group/item"
+              variant="ghost"
+              className="flex-1 min-w-0 text-left h-auto p-0 hover:bg-transparent group/item"
             >
               <div className="flex items-baseline gap-2">
                 <span className="text-muted-foreground">□</span>
@@ -70,14 +73,16 @@ export default function TodoRemindersList({
                 )}
                 {formatTimeAgo(reminder.timestamp)}
               </div>
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => onRemove(reminder.id)}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive shrink-0 transition-all cursor-pointer"
+              variant="ghost"
+              size="icon"
+              className="opacity-0 group-hover:opacity-100 h-6 w-6"
               title="Remove"
             >
               <X size={16} />
-            </button>
+            </Button>
           </div>
         ))}
       </div>

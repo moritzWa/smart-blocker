@@ -271,15 +271,15 @@ export default function Options() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-10">
-      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+    <div className="min-h-screen bg-muted py-10">
+      <div className="max-w-3xl mx-auto bg-background rounded-lg shadow-md p-8">
         <div className="flex items-center gap-4 mb-6">
           <img
             src="/logo.png"
             alt="AI Site Blocker"
             className="w-12 h-12"
           />
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+          <h1 className="text-3xl font-bold text-foreground">
             AI Site Blocker Settings
           </h1>
         </div>
@@ -330,7 +330,7 @@ export default function Options() {
           onImport={handleImport}
         />
 
-        <div className="mt-8 flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
+        <div className="mt-8 flex gap-4 pt-6 border-t border-border text-center">
           <Button
             variant="link"
             size="sm"

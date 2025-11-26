@@ -20,7 +20,7 @@ export default function UnblockedSitesList({
 
   return (
     <section className="mb-6 p-4 bg-muted border border-border rounded-lg">
-      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+      <h2 className="text-xl font-semibold text-foreground mb-3 flex items-center gap-2">
         <Clock size={20} />
         Currently Unblocked Sites
       </h2>
@@ -28,9 +28,9 @@ export default function UnblockedSitesList({
         {unblockedSites.map(({ domain, expiryTime }) => (
           <div
             key={domain}
-            className="flex justify-between items-center bg-white dark:bg-gray-700 px-3 py-2 rounded border border-border"
+            className="flex justify-between items-center bg-background px-3 py-2 rounded border border-border"
           >
-            <span className="font-mono text-sm text-gray-800 dark:text-gray-200">
+            <span className="font-mono text-sm text-foreground">
               {domain}
             </span>
             <span className="text-sm text-primary font-medium">

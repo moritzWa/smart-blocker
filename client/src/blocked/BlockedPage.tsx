@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { CornerDownLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface AIResponse {
   valid: boolean;
@@ -145,49 +147,51 @@ export default function BlockedPage() {
                   <label className="block mb-4 text-foreground font-medium text-lg">
                     Why do you want to access this? Don't lie to yourself.
                   </label>
-                  <input
+                  <Input
                     ref={reasonInputRef}
                     type="text"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmitReason()}
                     placeholder="e.g., Check Facebook Marketplace listings..."
-                    className="w-full px-4 py-3 text-lg border-2 border-input bg-input-background text-foreground rounded-lg focus:outline-none focus:border-success"
                     disabled={loading}
                   />
                 </div>
 
                 {error && (
-                  <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+                  <p className="text-destructive mb-4">{error}</p>
                 )}
 
-                <button
+                <Button
                   onClick={handleSubmitReason}
                   disabled={!reason.trim() || loading}
-                  className="w-full bg-success hover:bg-success-hover disabled:bg-disabled disabled:cursor-not-allowed text-success-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg mb-4 flex items-center justify-center gap-2"
+                  variant="success"
+                  className="w-full mb-4"
                 >
                   {loading ? 'Validating...' : 'Submit'}
                   {!loading && (
                     <CornerDownLeft size={18} className="opacity-60" />
                   )}
-                </button>
+                </Button>
 
                 {/* Separator and alternative options */}
                 <div className="border-t-2 border-border pt-4">
                   <div className="flex gap-3">
-                    <button
+                    <Button
                       onClick={() => setShowTodoInput(true)}
-                      className="flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      variant="default"
+                      className="flex-1"
                     >
                       Remind Me Later
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => window.history.back()}
                       disabled={loading}
-                      className="flex-1 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      variant="secondary"
+                      className="flex-1"
                     >
                       Go Back
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </>
@@ -198,26 +202,28 @@ export default function BlockedPage() {
                   <label className="block mb-4 text-foreground font-medium text-lg">
                     Optional note:
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={todoNote}
                     onChange={(e) => setTodoNote(e.target.value)}
                     placeholder="e.g., Check marketplace messages"
-                    className="w-full px-4 py-3 text-lg border-2 border-input bg-input-background text-foreground rounded-lg focus:outline-none focus:border-primary mb-4"
+                    className="mb-4"
                   />
                   <div className="flex gap-3">
-                    <button
+                    <Button
                       onClick={handleSaveTodoReminder}
-                      className="flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      variant="default"
+                      className="flex-1"
                     >
                       Save Todo Reminder
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={() => setShowTodoInput(false)}
-                      className="flex-1 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      variant="secondary"
+                      className="flex-1"
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </>
@@ -248,38 +254,42 @@ export default function BlockedPage() {
             <div className="flex gap-4 justify-center">
               {aiResponse.valid ? (
                 <>
-                  <button
+                  <Button
                     onClick={handleConfirmUnblock}
-                    className="bg-success hover:bg-success-hover text-success-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg flex items-center gap-2"
+                    variant="success"
+                    size="lg"
                   >
                     Unblock for {formatTime(aiResponse.seconds)}
                     <CornerDownLeft size={18} className="opacity-60" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={handleReset}
-                    className="bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    variant="secondary"
+                    size="lg"
                   >
                     Try Again
-                  </button>
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
                     onClick={() => {
                       setTodoNote(reason); // Auto-fill with original reason
                       setShowTodoInput(true);
                       setAiResponse(null); // Hide AI response
                     }}
-                    className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    variant="default"
+                    size="lg"
                   >
                     Add to To-Do List
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => window.history.back()}
-                    className="bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    variant="secondary"
+                    size="lg"
                   >
                     Go Back
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
