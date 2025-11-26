@@ -275,12 +275,12 @@ export default function Options() {
       <div className="max-w-3xl mx-auto bg-background rounded-lg shadow-md p-8">
         <div className="flex items-center gap-4 mb-6">
           <img
-            src="/logo.png"
+            src={allowOnlyMode ? '/logo-allow-only-mode.png' : '/logo.png'}
             alt="AI Site Blocker"
             className="w-12 h-12"
           />
           <h1 className="text-3xl font-bold text-foreground">
-            AI Site Blocker Settings
+            {allowOnlyMode ? 'Allow-Only Settings' : 'AI Site Blocker Settings'}
           </h1>
         </div>
 

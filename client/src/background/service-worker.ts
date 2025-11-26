@@ -4,11 +4,40 @@ import { unblockSite, addTodoReminder, removeTodoReminder } from './services/sto
 
 console.log('AI Site Blocker service worker loaded');
 
+// Function to update the extension icon based on allow-only mode
+async function updateExtensionIcon() {
+  const { allowOnlyMode } = await chrome.storage.sync.get(['allowOnlyMode']);
+
+  if (allowOnlyMode) {
+    // Use allow-only mode icons
+    chrome.action.setIcon({
+      path: {
+        16: '/images/allow-only-mode/icon16.png',
+        32: '/images/allow-only-mode/icon32.png',
+        48: '/images/allow-only-mode/icon48.png',
+        128: '/images/allow-only-mode/icon128.png'
+      }
+    });
+  } else {
+    // Use default icons
+    chrome.action.setIcon({
+      path: {
+        16: '/images/icon16.png',
+        32: '/images/icon32.png',
+        48: '/images/icon48.png',
+        128: '/images/icon128.png'
+      }
+    });
+  }
+}
+
 // Set up default sites on first install or if storage is empty
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await initializeDefaultSites();
   }
+  // Update icon on install/update
+  updateExtensionIcon();
 });
 
 // Also check on startup in case storage was cleared
@@ -17,6 +46,8 @@ chrome.runtime.onStartup.addListener(async () => {
   if (!result.allowedSites && !result.blockedSites) {
     await initializeDefaultSites();
   }
+  // Update icon on startup
+  updateExtensionIcon();
 });
 
 async function initializeDefaultSites() {
@@ -98,6 +129,13 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
         '?url=' + encodeURIComponent(tab.url);
       chrome.tabs.update(activeInfo.tabId, { url: blockPageUrl });
     }
+  }
+});
+
+// Listen for changes to allow-only mode in storage
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'sync' && changes.allowOnlyMode) {
+    updateExtensionIcon();
   }
 });
 

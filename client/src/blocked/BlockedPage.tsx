@@ -18,6 +18,7 @@ export default function BlockedPage() {
   const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [allowOnlyMode, setAllowOnlyMode] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -32,6 +33,11 @@ export default function BlockedPage() {
     } catch {
       setHostname(url);
     }
+
+    // Check if allow-only mode is enabled
+    chrome.storage.sync.get(['allowOnlyMode'], (result) => {
+      setAllowOnlyMode(!!result.allowOnlyMode);
+    });
 
     // Auto-focus reason input
     setTimeout(() => reasonInputRef.current?.focus(), 100);
@@ -127,13 +133,13 @@ export default function BlockedPage() {
     <div className="min-h-screen bg-background flex items-center justify-center font-sans">
       <div className="text-center max-w-2xl px-10 py-12">
         <img
-          src="/logo.png"
+          src={allowOnlyMode ? '/logo-allow-only-mode.png' : '/logo.png'}
           alt="AI Site Blocker"
           className="w-32 h-32 mx-auto mb-6"
         />
 
         <h1 className="text-5xl font-bold text-foreground mb-4">
-          AI Site Blocker - Blocked
+          {allowOnlyMode ? 'Allow-Only - Blocked' : 'AI Site Blocker - Blocked'}
         </h1>
 
         <p className="text-2xl text-muted-foreground mb-10">{hostname}</p>
