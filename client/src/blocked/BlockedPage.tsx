@@ -121,8 +121,9 @@ export default function BlockedPage() {
       note: todoNote.trim() || undefined,
     });
 
-    // Go back after saving
-    window.history.back();
+    // Go back 2 steps to avoid redirect loop (skip blocked URL + blocked page)
+    console.log('🔙 Going back 2 steps in history after saving todo');
+    window.history.go(-2);
   };
 
   const handleReset = () => {
@@ -192,7 +193,10 @@ export default function BlockedPage() {
                       Remind Me Later
                     </Button>
                     <Button
-                      onClick={() => window.history.back()}
+                      onClick={() => {
+                        console.log('🔙 Going back 2 steps in history to avoid redirect loop');
+                        window.history.go(-2);
+                      }}
                       disabled={loading}
                       variant="secondary"
                       className="flex-1"
@@ -289,7 +293,10 @@ export default function BlockedPage() {
                     Add to To-Do List
                   </Button>
                   <Button
-                    onClick={() => window.history.back()}
+                    onClick={() => {
+                      console.log('🔙 Going back 2 steps in history to avoid redirect loop');
+                      window.history.go(-2);
+                    }}
                     variant="secondary"
                     size="lg"
                   >
