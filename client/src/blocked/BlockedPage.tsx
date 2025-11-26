@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { CornerDownLeft } from 'lucide-react';
 
 interface AIResponse {
   valid: boolean;
@@ -33,6 +34,20 @@ export default function BlockedPage() {
     // Auto-focus reason input
     setTimeout(() => reasonInputRef.current?.focus(), 100);
   }, []);
+
+  // Handle Enter key to unblock when request is approved
+  useEffect(() => {
+    if (!aiResponse?.valid) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleConfirmUnblock();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [aiResponse?.valid, blockedUrl]);
 
   const handleSubmitReason = async () => {
     if (!reason.trim()) return;
@@ -107,7 +122,7 @@ export default function BlockedPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center font-sans">
+    <div className="min-h-screen bg-background flex items-center justify-center font-sans">
       <div className="text-center max-w-2xl px-10 py-12">
         <img
           src="/logo.png"
@@ -115,21 +130,19 @@ export default function BlockedPage() {
           className="w-32 h-32 mx-auto mb-6"
         />
 
-        <h1 className="text-5xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+        <h1 className="text-5xl font-bold text-foreground mb-4">
           AI Site Blocker - Blocked
         </h1>
 
-        <p className="text-2xl text-gray-600 dark:text-gray-400 mb-10">
-          {hostname}
-        </p>
+        <p className="text-2xl text-muted-foreground mb-10">{hostname}</p>
 
         {!aiResponse ? (
           <>
             {!showTodoInput ? (
               <>
                 {/* Option 1: AI Validation */}
-                <div className="mb-8">
-                  <label className="block mb-4 text-gray-700 dark:text-gray-300 font-medium text-lg">
+                <div className="mb-6">
+                  <label className="block mb-4 text-foreground font-medium text-lg">
                     Why do you want to access this?
                   </label>
                   <input
@@ -139,7 +152,7 @@ export default function BlockedPage() {
                     onChange={(e) => setReason(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmitReason()}
                     placeholder="e.g., Check Facebook Marketplace listings..."
-                    className="w-full px-4 py-3 text-lg border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg focus:outline-none focus:border-green-500 dark:focus:border-green-400"
+                    className="w-full px-4 py-3 text-lg border-2 border-input bg-input-background text-foreground rounded-lg focus:outline-none focus:border-success"
                     disabled={loading}
                   />
                 </div>
@@ -151,24 +164,27 @@ export default function BlockedPage() {
                 <button
                   onClick={handleSubmitReason}
                   disabled={!reason.trim() || loading}
-                  className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg mb-6"
+                  className="w-full bg-success hover:bg-success-hover disabled:bg-disabled disabled:cursor-not-allowed text-success-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg mb-4 flex items-center justify-center gap-2"
                 >
                   {loading ? 'Validating...' : 'Submit'}
+                  {!loading && (
+                    <CornerDownLeft size={18} className="opacity-60" />
+                  )}
                 </button>
 
                 {/* Separator and alternative options */}
-                <div className="border-t-2 border-gray-200 dark:border-gray-700 pt-4">
+                <div className="border-t-2 border-border pt-4">
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowTodoInput(true)}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      className="flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
                     >
                       Remind Me Later
                     </button>
                     <button
                       onClick={() => window.history.back()}
                       disabled={loading}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      className="flex-1 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
                     >
                       Go Back
                     </button>
@@ -179,7 +195,7 @@ export default function BlockedPage() {
               <>
                 {/* Remind Me Later Form */}
                 <div>
-                  <label className="block mb-4 text-gray-700 dark:text-gray-300 font-medium text-lg">
+                  <label className="block mb-4 text-foreground font-medium text-lg">
                     Optional note:
                   </label>
                   <input
@@ -187,18 +203,18 @@ export default function BlockedPage() {
                     value={todoNote}
                     onChange={(e) => setTodoNote(e.target.value)}
                     placeholder="e.g., Check marketplace messages"
-                    className="w-full px-4 py-3 text-lg border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 mb-4"
+                    className="w-full px-4 py-3 text-lg border-2 border-input bg-input-background text-foreground rounded-lg focus:outline-none focus:border-primary mb-4"
                   />
                   <div className="flex gap-3">
                     <button
                       onClick={handleSaveTodoReminder}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      className="flex-1 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
                     >
                       Save Todo Reminder
                     </button>
                     <button
                       onClick={() => setShowTodoInput(false)}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+                      className="flex-1 bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
                     >
                       Cancel
                     </button>
@@ -210,18 +226,18 @@ export default function BlockedPage() {
         ) : (
           <>
             {/* AI Response Display */}
-            <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg text-left">
+            <div className="mb-8 p-6 bg-muted rounded-lg text-left">
               <div className="flex items-start gap-3 mb-4">
                 <div className="text-3xl">{aiResponse.valid ? '✅' : '❌'}</div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                  <h2 className="text-xl font-semibold text-foreground mb-2">
                     {aiResponse.valid ? 'Request Approved' : 'Request Denied'}
                   </h2>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">
+                  <p className="text-foreground text-lg leading-relaxed">
                     {aiResponse.reasoning}
                   </p>
                   {aiResponse.valid && (
-                    <p className="text-green-600 dark:text-green-400 font-semibold mt-3 text-lg">
+                    <p className="text-success font-semibold mt-3 text-lg">
                       Time allocated: {formatTime(aiResponse.seconds)}
                     </p>
                   )}
@@ -234,13 +250,14 @@ export default function BlockedPage() {
                 <>
                   <button
                     onClick={handleConfirmUnblock}
-                    className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    className="bg-success hover:bg-success-hover text-success-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg flex items-center gap-2"
                   >
                     Unblock for {formatTime(aiResponse.seconds)}
+                    <CornerDownLeft size={18} className="opacity-60" />
                   </button>
                   <button
                     onClick={handleReset}
-                    className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    className="bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
                   >
                     Try Again
                   </button>
@@ -253,13 +270,13 @@ export default function BlockedPage() {
                       setShowTodoInput(true);
                       setAiResponse(null); // Hide AI response
                     }}
-                    className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
                   >
                     Add to To-Do List
                   </button>
                   <button
                     onClick={() => window.history.back()}
-                    className="bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
+                    className="bg-secondary hover:bg-secondary-hover text-secondary-foreground font-semibold px-10 py-4 rounded-lg transition-colors text-lg"
                   >
                     Go Back
                   </button>

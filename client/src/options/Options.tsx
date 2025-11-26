@@ -318,7 +318,7 @@ export default function Options() {
         />
 
         {status && (
-          <div className="mb-6 text-green-600 dark:text-green-400 font-medium text-sm">
+          <div className="mb-6 text-success font-medium text-sm">
             {status}
           </div>
         )}
