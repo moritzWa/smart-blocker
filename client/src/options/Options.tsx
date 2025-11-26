@@ -271,8 +271,8 @@ export default function Options() {
   }
 
   return (
-    <div className="min-h-screen py-10">
-      <div className="max-w-3xl mx-auto bg-background rounded-lg p-8">
+    <div className="min-h-screen bg-background py-10">
+      <div className="max-w-3xl mx-auto rounded-lg p-8">
         <div className="flex items-center gap-4 mb-6">
           <img
             src={allowOnlyMode ? '/logo-allow-only-mode.png' : '/logo.png'}
@@ -280,7 +280,7 @@ export default function Options() {
             className="w-12 h-12"
           />
           <h1 className="text-3xl font-bold text-foreground">
-            {allowOnlyMode ? 'Allow-Only Settings' : 'AI Site Blocker Settings'}
+            AI Site Blocker Settings
           </h1>
         </div>
 
