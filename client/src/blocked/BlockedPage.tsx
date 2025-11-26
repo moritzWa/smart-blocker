@@ -4,7 +4,7 @@ import { CornerDownLeft } from 'lucide-react';
 interface AIResponse {
   valid: boolean;
   seconds: number;
-  reasoning: string;
+  message: string;
 }
 
 export default function BlockedPage() {
@@ -234,7 +234,7 @@ export default function BlockedPage() {
                     {aiResponse.valid ? 'Request Approved' : 'Request Denied'}
                   </h2>
                   <p className="text-foreground text-lg leading-relaxed">
-                    {aiResponse.reasoning}
+                    {aiResponse.message}
                   </p>
                   {aiResponse.valid && (
                     <p className="text-success font-semibold mt-3 text-lg">
