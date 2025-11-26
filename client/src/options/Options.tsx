@@ -246,7 +246,7 @@ export default function Options() {
         id: `seed-${Date.now()}-3`,
         url: 'https://www.linkedin.com/feed/',
         hostname: 'linkedin.com',
-        note: 'Reply to Mike\'s message',
+        note: "Reply to Mike's message",
         timestamp: Date.now() - 1800000, // 30 minutes ago
       },
       {
@@ -271,8 +271,8 @@ export default function Options() {
   }
 
   return (
-    <div className="min-h-screen bg-muted py-10">
-      <div className="max-w-3xl mx-auto bg-background rounded-lg shadow-md p-8">
+    <div className="min-h-screen py-10">
+      <div className="max-w-3xl mx-auto bg-background rounded-lg p-8">
         <div className="flex items-center gap-4 mb-6">
           <img
             src={allowOnlyMode ? '/logo-allow-only-mode.png' : '/logo.png'}
@@ -319,7 +319,7 @@ export default function Options() {
         />
 
         {status && (
-          <div className="mb-6 text-success font-medium text-sm">
+          <div className="mb-6 text-emerald-600 dark:text-emerald-400 font-medium text-sm">
             {status}
           </div>
         )}
@@ -331,11 +331,7 @@ export default function Options() {
         />
 
         <div className="mt-8 flex gap-4 pt-6 border-t border-border text-center">
-          <Button
-            variant="link"
-            size="sm"
-            asChild
-          >
+          <Button variant="link" size="sm" asChild>
             <a
               href="https://github.com/moritzWa/smart-blocker"
               target="_blank"
@@ -344,11 +340,7 @@ export default function Options() {
               Contribute on GitHub
             </a>
           </Button>
-          <Button
-            variant="link"
-            size="sm"
-            asChild
-          >
+          <Button variant="link" size="sm" asChild>
             <a
               // TODO: Add link to extension review page once submitted and accepted
               href="https://moritzw.com"
@@ -361,6 +353,7 @@ export default function Options() {
           <Button
             variant="link"
             size="sm"
+            className="cursor-pointer"
             onClick={() => setShowImport(!showImport)}
           >
             Import from SiteBlock
@@ -368,6 +361,7 @@ export default function Options() {
           <Button
             variant="link"
             size="sm"
+            className="cursor-pointer"
             onClick={handleSeedTodos}
           >
             Seed ToDos

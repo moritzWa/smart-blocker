@@ -149,7 +149,7 @@ export default function BlockedPage() {
             {!showTodoInput ? (
               <>
                 {/* Option 1: AI Validation */}
-                <div className="mb-6">
+                <div className="mb-4">
                   <label className="block mb-4 text-foreground font-medium text-lg">
                     Why do you want to access this? Don't lie to yourself.
                   </label>
@@ -164,14 +164,12 @@ export default function BlockedPage() {
                   />
                 </div>
 
-                {error && (
-                  <p className="text-destructive mb-4">{error}</p>
-                )}
+                {error && <p className="text-destructive mb-4">{error}</p>}
 
                 <Button
                   onClick={handleSubmitReason}
                   disabled={!reason.trim() || loading}
-                  variant="success"
+                  variant="default"
                   className="w-full mb-4"
                 >
                   {loading ? 'Validating...' : 'Submit'}
@@ -243,13 +241,14 @@ export default function BlockedPage() {
                 <div className="text-3xl">{aiResponse.valid ? '✅' : '❌'}</div>
                 <div className="flex-1">
                   <h2 className="text-xl font-semibold text-foreground mb-2">
-                    {aiResponse.valid ? 'Request Approved' : 'Request Denied'}
+                    {aiResponse.valid ? 'Approved' : 'Denied'}
+                    {reason ? `: ${reason}` : ''}
                   </h2>
                   <p className="text-foreground text-lg leading-relaxed">
                     {aiResponse.message}
                   </p>
                   {aiResponse.valid && (
-                    <p className="text-success font-semibold mt-3 text-lg">
+                    <p className="text-emerald-600 dark:text-emerald-400 font-semibold mt-3 text-lg">
                       Time allocated: {formatTime(aiResponse.seconds)}
                     </p>
                   )}
@@ -262,17 +261,13 @@ export default function BlockedPage() {
                 <>
                   <Button
                     onClick={handleConfirmUnblock}
-                    variant="success"
+                    variant="default"
                     size="lg"
                   >
                     Unblock for {formatTime(aiResponse.seconds)}
                     <CornerDownLeft size={18} className="opacity-60" />
                   </Button>
-                  <Button
-                    onClick={handleReset}
-                    variant="secondary"
-                    size="lg"
-                  >
+                  <Button onClick={handleReset} variant="secondary" size="lg">
                     Try Again
                   </Button>
                 </>
