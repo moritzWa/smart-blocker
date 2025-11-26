@@ -48,12 +48,11 @@ export default function TodoRemindersList({
         {todoReminders.map((reminder) => (
           <div
             key={reminder.id}
-            className="flex items-start gap-3 group hover:bg-muted -mx-2 px-2 py-2 rounded transition-colors"
+            className="flex items-start gap-3 group hover:bg-muted px-2 py-2 rounded-lg transition-colors"
           >
-            <Button
+            <div
               onClick={() => onOpen(reminder.url, reminder.id)}
-              variant="ghost"
-              className="flex-1 min-w-0 text-left h-auto p-0 hover:bg-transparent group/item"
+              className="flex-1 min-w-0 text-left h-auto p-0 hover:bg-transparent group/item cursor-pointer justify-between"
             >
               <div className="flex items-baseline gap-2">
                 <span className="text-muted-foreground">□</span>
@@ -63,17 +62,19 @@ export default function TodoRemindersList({
                   </span>
                 ) : (
                   <span className="font-mono text-sm text-foreground group-hover/item:text-primary break-all transition-colors">
-                    {reminder.hostname}
+                    {reminder.url}
                   </span>
                 )}
+
+                <div className="ml-6 mt-0.5 text-xs text-muted-foreground">
+                  {reminder.note && (
+                    <span className="font-mono">{reminder.url} • </span>
+                  )}
+                  {formatTimeAgo(reminder.timestamp)}
+                </div>
               </div>
-              <div className="ml-6 mt-0.5 text-xs text-muted-foreground">
-                {reminder.note && (
-                  <span className="font-mono">{reminder.hostname} • </span>
-                )}
-                {formatTimeAgo(reminder.timestamp)}
-              </div>
-            </Button>
+            </div>
+
             <Button
               onClick={() => onRemove(reminder.id)}
               variant="ghost"
