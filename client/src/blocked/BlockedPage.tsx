@@ -159,7 +159,7 @@ export default function BlockedPage() {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmitReason()}
-                    placeholder="e.g., Check Facebook Marketplace listings..."
+                    placeholder="Why disrupt your focus?"
                     disabled={loading}
                   />
                 </div>
