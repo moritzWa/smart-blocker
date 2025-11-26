@@ -11,7 +11,7 @@ interface AIResponse {
 
 export default function BlockedPage() {
   const [blockedUrl, setBlockedUrl] = useState('');
-  const [hostname, setHostname] = useState('');
+  const [displayUrl, setDisplayUrl] = useState('');
   const [reason, setReason] = useState('');
   const [todoNote, setTodoNote] = useState('');
   const [showTodoInput, setShowTodoInput] = useState(false);
@@ -29,9 +29,10 @@ export default function BlockedPage() {
 
     try {
       const urlObj = new URL(url);
-      setHostname(urlObj.hostname);
+      // Show hostname + path + query params (but not protocol)
+      setDisplayUrl(urlObj.hostname + urlObj.pathname + urlObj.search);
     } catch {
-      setHostname(url);
+      setDisplayUrl(url);
     }
 
     // Check if allow-only mode is enabled
@@ -66,7 +67,7 @@ export default function BlockedPage() {
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'VALIDATE_REASON',
-        hostname,
+        hostname: displayUrl,
         reason,
       });
 
@@ -86,7 +87,9 @@ export default function BlockedPage() {
   const handleConfirmUnblock = async () => {
     if (!aiResponse?.valid) return;
 
-    const domain = hostname.replace(/^www\./, '');
+    // Extract just the hostname for unblocking (remove path/query params and www)
+    const hostnameOnly = new URL(blockedUrl).hostname;
+    const domain = hostnameOnly.replace(/^www\./, '');
     const response = await chrome.runtime.sendMessage({
       type: 'UNBLOCK_SITE',
       domain,
@@ -142,7 +145,7 @@ export default function BlockedPage() {
           {allowOnlyMode ? 'Allow-Only - Blocked' : 'AI Site Blocker - Blocked'}
         </h1>
 
-        <p className="text-2xl text-muted-foreground mb-10">{hostname}</p>
+        <p className="text-2xl text-muted-foreground mb-10">{displayUrl}</p>
 
         {!aiResponse ? (
           <>
@@ -208,9 +211,10 @@ export default function BlockedPage() {
                   </label>
                   <Input
                     type="text"
+                    autoFocus={true}
                     value={todoNote}
                     onChange={(e) => setTodoNote(e.target.value)}
-                    placeholder="e.g., Check marketplace messages"
+                    placeholder="Why do you want to access this later?"
                     className="mb-4"
                   />
                   <div className="flex gap-3">
