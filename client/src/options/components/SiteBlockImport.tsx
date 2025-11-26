@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface SiteBlockImportProps {
   show: boolean;
@@ -38,27 +40,28 @@ export default function SiteBlockImport({
         Paste your SiteBlock settings below. Supports Allow-Only Mode (*) and
         allowed sites (+).
       </p>
-      <textarea
+      <Textarea
         value={importText}
         onChange={(e) => setImportText(e.target.value)}
         rows={10}
-        className="w-full px-3 py-2 border border-input dark:bg-gray-700 dark:text-gray-100 rounded-md font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary mb-3"
+        className="mb-3"
         placeholder={`Example:\n*\n+remnote.com\n+claude.ai\nyoutube.com\ntiktok.com`}
       />
       <div className="flex gap-2">
-        <button
+        <Button
           onClick={handleImport}
           disabled={!importText.trim()}
-          className="bg-primary hover:bg-primary-hover disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold px-6 py-2 rounded-md transition-colors"
+          size="sm"
         >
           Import
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleCancel}
-          className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-white font-semibold px-6 py-2 rounded-md transition-colors"
+          variant="secondary"
+          size="sm"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </section>
   );

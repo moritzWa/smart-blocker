@@ -4,6 +4,7 @@ import UnblockedSitesList from './components/UnblockedSitesList';
 import AllowOnlyModeToggle from './components/AllowOnlyModeToggle';
 import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
+import { Button } from '@/components/ui/button';
 
 interface UnblockedSite {
   domain: string;
@@ -330,35 +331,47 @@ export default function Options() {
         />
 
         <div className="mt-8 flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700 text-center">
-          <a
-            href="https://github.com/moritzWa/smart-blocker"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          <Button
+            variant="link"
+            size="sm"
+            asChild
           >
-            Contribute on GitHub
-          </a>
-          <a
-            // TODO: Add link to extension review page once submitted and accepted
-            href="https://moritzw.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            <a
+              href="https://github.com/moritzWa/smart-blocker"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Contribute on GitHub
+            </a>
+          </Button>
+          <Button
+            variant="link"
+            size="sm"
+            asChild
           >
-            Review Extension
-          </a>
-          <button
+            <a
+              // TODO: Add link to extension review page once submitted and accepted
+              href="https://moritzw.com"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Review Extension
+            </a>
+          </Button>
+          <Button
+            variant="link"
+            size="sm"
             onClick={() => setShowImport(!showImport)}
-            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
           >
             Import from SiteBlock
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="link"
+            size="sm"
             onClick={handleSeedTodos}
-            className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
           >
             Seed ToDos
-          </button>
+          </Button>
         </div>
       </div>
     </div>

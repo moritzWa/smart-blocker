@@ -143,7 +143,7 @@ export default function BlockedPage() {
                 {/* Option 1: AI Validation */}
                 <div className="mb-6">
                   <label className="block mb-4 text-foreground font-medium text-lg">
-                    Why do you want to access this?
+                    Why do you want to access this? Don't lie to yourself.
                   </label>
                   <input
                     ref={reasonInputRef}
