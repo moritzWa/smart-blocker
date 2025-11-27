@@ -35,6 +35,11 @@ export function matchesDomain(domain: string, pattern: string): boolean {
 }
 
 export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }> {
+  // Never block chrome:// or chrome-extension:// URLs
+  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) {
+    return { blocked: false };
+  }
+
   const domain = normalizeUrl(url);
 
   if (!domain) {
