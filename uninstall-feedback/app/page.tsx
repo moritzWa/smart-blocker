@@ -6,26 +6,21 @@ export default function UninstallFeedback() {
   const [whyUninstall, setWhyUninstall] = useState('');
   const [improvements, setImprovements] = useState('');
 
-  const handleSendFeedback = () => {
-    const emailBody = `Why did you uninstall?
+  const emailBody = `Why did you uninstall?
 ${whyUninstall}
 
 What can we improve?
 ${improvements}`;
 
-    const mailtoLink = `mailto:wallawitsch@gmail.com?subject=Focus Shield Uninstall Feedback&body=${encodeURIComponent(emailBody)}`;
-
-    // Create an anchor element and click it (more reliable than window.location.href)
-    const anchor = document.createElement('a');
-    anchor.href = mailtoLink;
-    anchor.click();
-  };
+  const mailtoLink = `mailto:wallawitsch@gmail.com?subject=Focus Shield Uninstall Feedback&body=${encodeURIComponent(
+    emailBody
+  )}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 text-center">
-          We're sorry to see you go
+          We&apos;re sorry to see you go
         </h1>
         <p className="text-gray-600 dark:text-gray-300 text-center mb-8">
           Your feedback helps us improve Focus Shield for everyone
@@ -66,13 +61,16 @@ ${improvements}`;
             />
           </div>
 
-          <button
-            onClick={handleSendFeedback}
-            disabled={!whyUninstall.trim() && !improvements.trim()}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-lg transition-colors text-lg"
+          <a
+            href={mailtoLink}
+            className={`block w-full text-center font-semibold py-4 px-6 rounded-lg transition-colors text-lg ${
+              !whyUninstall.trim() || !improvements.trim()
+                ? 'bg-gray-400 cursor-not-allowed pointer-events-none text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
           >
             Send Feedback via Email
-          </button>
+          </a>
 
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             This will open your email client with your feedback pre-filled
