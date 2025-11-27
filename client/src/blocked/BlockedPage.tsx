@@ -194,7 +194,9 @@ export default function BlockedPage() {
                     </Button>
                     <Button
                       onClick={() => {
-                        console.log('🔙 Going back 2 steps in history to avoid redirect loop');
+                        console.log(
+                          '🔙 Going back 2 steps in history to avoid redirect loop'
+                        );
                         window.history.go(-2);
                       }}
                       disabled={loading}
@@ -276,7 +278,7 @@ export default function BlockedPage() {
                     <CornerDownLeft size={18} className="opacity-60" />
                   </Button>
                   <Button onClick={handleReset} variant="secondary" size="lg">
-                    Try Again
+                    Try different reason
                   </Button>
                 </>
               ) : (
@@ -294,7 +296,9 @@ export default function BlockedPage() {
                   </Button>
                   <Button
                     onClick={() => {
-                      console.log('🔙 Going back 2 steps in history to avoid redirect loop');
+                      console.log(
+                        '🔙 Going back 2 steps in history to avoid redirect loop'
+                      );
                       window.history.go(-2);
                     }}
                     variant="secondary"

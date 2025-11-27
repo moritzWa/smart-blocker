@@ -4,6 +4,93 @@ import { unblockSite, addTodoReminder, removeTodoReminder } from './services/sto
 
 console.log('AI Site Blocker service worker loaded');
 
+// Badge update interval ID
+let badgeUpdateInterval: number | null = null;
+
+// Helper to format time remaining for badge display
+function formatBadgeTime(seconds: number): string {
+  if (seconds <= 0) return '';
+  if (seconds < 60) return seconds.toString();
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h`;
+}
+
+// Update badge for current active tab
+async function updateBadgeForActiveTab() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tabs.length === 0) return;
+
+  const tab = tabs[0];
+  if (!tab.url || !tab.id) {
+    chrome.action.setBadgeText({ text: '' });
+    return;
+  }
+
+  // Skip chrome:// URLs and extension pages
+  if (tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://') ||
+      tab.url.includes('blocked.html')) {
+    chrome.action.setBadgeText({ text: '' });
+    return;
+  }
+
+  // Get the domain and check if it's temporarily unblocked
+  const domain = normalizeUrl(tab.url);
+  const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
+  const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
+
+  const expiryTime = temporaryUnblocks[domain];
+  if (expiryTime && expiryTime > Date.now()) {
+    const secondsRemaining = Math.ceil((expiryTime - Date.now()) / 1000);
+    const badgeText = formatBadgeTime(secondsRemaining);
+
+    // Set color based on time remaining
+    const color = secondsRemaining <= 60 ? '#dc2626' : '#059669'; // Red if <1min, green otherwise
+
+    chrome.action.setBadgeBackgroundColor({ color });
+    chrome.action.setBadgeTextColor({ color: '#ffffff' }); // White text for better readability
+    chrome.action.setBadgeText({ text: badgeText });
+  } else {
+    chrome.action.setBadgeText({ text: '' });
+  }
+}
+
+// Start badge update timer
+function startBadgeUpdateTimer() {
+  if (badgeUpdateInterval !== null) return; // Already running
+
+  // Update immediately
+  updateBadgeForActiveTab();
+
+  // Update every second
+  badgeUpdateInterval = setInterval(() => {
+    updateBadgeForActiveTab();
+  }, 1000) as unknown as number;
+
+  console.log('⏱️ Started badge update timer');
+}
+
+// Stop badge update timer
+function stopBadgeUpdateTimer() {
+  if (badgeUpdateInterval !== null) {
+    clearInterval(badgeUpdateInterval);
+    badgeUpdateInterval = null;
+    chrome.action.setBadgeText({ text: '' });
+    console.log('⏱️ Stopped badge update timer');
+  }
+}
+
+// Check if we have any active temporary unblocks
+async function hasActiveUnblocks(): Promise<boolean> {
+  const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
+  const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
+  const now = Date.now();
+
+  return Object.values(temporaryUnblocks).some(expiryTime => expiryTime > now);
+}
+
 // Function to update the extension icon based on allow-only mode
 async function updateExtensionIcon() {
   const { allowOnlyMode } = await chrome.storage.sync.get(['allowOnlyMode']);
@@ -48,6 +135,11 @@ chrome.runtime.onStartup.addListener(async () => {
   }
   // Update icon on startup
   updateExtensionIcon();
+
+  // Start badge timer if we have active unblocks
+  if (await hasActiveUnblocks()) {
+    startBadgeUpdateTimer();
+  }
 });
 
 async function initializeDefaultSites() {
@@ -109,6 +201,12 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         '?url=' + encodeURIComponent(tab.url);
       chrome.tabs.update(tabId, { url: blockPageUrl });
     }
+
+    // Update badge if this is the active tab
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (activeTab?.id === tabId) {
+      updateBadgeForActiveTab();
+    }
   }
 });
 
@@ -130,6 +228,9 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
       chrome.tabs.update(activeInfo.tabId, { url: blockPageUrl });
     }
   }
+
+  // Update badge immediately when switching tabs
+  updateBadgeForActiveTab();
 });
 
 // Listen for changes to allow-only mode in storage
@@ -146,7 +247,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'UNBLOCK_SITE') {
-    unblockSite(message.domain, message.seconds).then(sendResponse);
+    unblockSite(message.domain, message.seconds).then((response) => {
+      // Start badge timer when a site is unblocked
+      startBadgeUpdateTimer();
+      sendResponse(response);
+    });
     return true;
   }
 
@@ -190,6 +295,14 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
           console.log(`🚫 Re-blocked tab ${tab.id} for ${domain}`);
         }
       }
+    }
+
+    // Check if we still have any active unblocks, if not stop the timer
+    if (!(await hasActiveUnblocks())) {
+      stopBadgeUpdateTimer();
+    } else {
+      // Update badge immediately
+      updateBadgeForActiveTab();
     }
   }
 });
