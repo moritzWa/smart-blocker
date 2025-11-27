@@ -37,7 +37,7 @@ export default function SiteBlockImport({
         Import from SiteBlock
       </h2>
       <p className="text-sm text-muted-foreground mb-3">
-        Paste your SiteBlock settings below. Supports Allow-Only Mode (*) and
+        Paste your SiteBlock settings below. Supports Strict Mode (*) and
         allowed sites (+).
       </p>
       <Textarea

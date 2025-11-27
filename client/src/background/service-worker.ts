@@ -91,18 +91,18 @@ async function hasActiveUnblocks(): Promise<boolean> {
   return Object.values(temporaryUnblocks).some(expiryTime => expiryTime > now);
 }
 
-// Function to update the extension icon based on allow-only mode
+// Function to update the extension icon based on strict mode
 async function updateExtensionIcon() {
-  const { allowOnlyMode } = await chrome.storage.sync.get(['allowOnlyMode']);
+  const { strictMode } = await chrome.storage.sync.get(['strictMode']);
 
-  if (allowOnlyMode) {
-    // Use allow-only mode icons
+  if (strictMode) {
+    // Use strict mode icons
     chrome.action.setIcon({
       path: {
-        16: '/images/allow-only-mode/icon16.png',
-        32: '/images/allow-only-mode/icon32.png',
-        48: '/images/allow-only-mode/icon48.png',
-        128: '/images/allow-only-mode/icon128.png'
+        16: '/images/strict-mode/icon16.png',
+        32: '/images/strict-mode/icon32.png',
+        48: '/images/strict-mode/icon48.png',
+        128: '/images/strict-mode/icon128.png'
       }
     });
   } else {
@@ -173,7 +173,7 @@ async function initializeDefaultSites() {
   await chrome.storage.sync.set({
     allowedSites: defaultAllowedSites,
     blockedSites: defaultBlockedSites,
-    allowOnlyMode: false,
+    strictMode: false,
   });
 
   console.log('✅ Initialized default sites');
@@ -233,9 +233,9 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   updateBadgeForActiveTab();
 });
 
-// Listen for changes to allow-only mode in storage
+// Listen for changes to strict mode in storage
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'sync' && changes.allowOnlyMode) {
+  if (areaName === 'sync' && changes.strictMode) {
     updateExtensionIcon();
   }
 });
@@ -313,13 +313,31 @@ async function checkAllOpenTabs(): Promise<{ success: boolean }> {
 
   for (const tab of tabs) {
     if (tab.id && tab.url) {
-      // Skip chrome:// URLs and extension pages
-      if (tab.url.startsWith('chrome://') ||
-          tab.url.startsWith('chrome-extension://') ||
-          tab.url.includes('blocked.html')) {
+      // Skip chrome:// URLs (but not extension pages - we need to handle blocked.html)
+      if (tab.url.startsWith('chrome://')) {
         continue;
       }
 
+      // Handle tabs currently on blocked.html
+      if (tab.url.includes('blocked.html')) {
+        // Extract original URL from query parameter
+        const urlParams = new URLSearchParams(new URL(tab.url).search);
+        const originalUrl = urlParams.get('url');
+
+        if (originalUrl) {
+          // Check if the original URL should still be blocked
+          const result = await checkIfBlocked(originalUrl);
+          if (!result.blocked) {
+            // No longer blocked - redirect back to original URL
+            console.log(`✅ Unblocking tab ${tab.id}: ${originalUrl}`);
+            chrome.tabs.update(tab.id, { url: originalUrl });
+          }
+          // If still blocked, leave it on blocked.html
+        }
+        continue;
+      }
+
+      // Handle normal tabs - block if needed
       const result = await checkIfBlocked(tab.url);
       if (result.blocked) {
         const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +

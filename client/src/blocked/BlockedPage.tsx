@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { CornerDownLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import ReasonForm from './components/ReasonForm';
+import TodoReminderForm from './components/TodoReminderForm';
+import AIResponseDisplay from './components/AIResponseDisplay';
 
 interface AIResponse {
   valid: boolean;
@@ -18,7 +18,7 @@ export default function BlockedPage() {
   const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [allowOnlyMode, setAllowOnlyMode] = useState(false);
+  const [strictMode, setStrictMode] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,9 +35,9 @@ export default function BlockedPage() {
       setDisplayUrl(url);
     }
 
-    // Check if allow-only mode is enabled
-    chrome.storage.sync.get(['allowOnlyMode'], (result) => {
-      setAllowOnlyMode(!!result.allowOnlyMode);
+    // Check if strict mode is enabled
+    chrome.storage.sync.get(['strictMode'], (result) => {
+      setStrictMode(!!result.strictMode);
     });
 
     // Auto-focus reason input
@@ -133,183 +133,66 @@ export default function BlockedPage() {
     setTimeout(() => reasonInputRef.current?.focus(), 0);
   };
 
+  const handleGoBack = () => {
+    console.log('🔙 Going back 2 steps in history to avoid redirect loop');
+    window.history.go(-2);
+  };
+
+  const handleAddToTodo = () => {
+    setTodoNote(reason); // Auto-fill with original reason
+    setShowTodoInput(true);
+    setAiResponse(null); // Hide AI response
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center font-sans">
       <div className="text-center max-w-2xl px-10 py-12">
         <img
-          src={allowOnlyMode ? '/logo-allow-only-mode.png' : '/logo.png'}
+          src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
           alt="AI Site Blocker"
           className="w-32 h-32 mx-auto mb-6"
         />
 
         <h1 className="text-5xl font-bold text-foreground mb-4">
-          {allowOnlyMode ? 'Allow-Only - Blocked' : 'AI Site Blocker - Blocked'}
+          {strictMode ? 'AI Site Blocker - Strict Mode' : 'AI Site Blocker'}
         </h1>
 
-        <p className="text-2xl text-muted-foreground mb-10">{displayUrl}</p>
+        <p className="text-2xl text-foreground mb-10">
+          Blocked: <span className="text-muted-foreground">{displayUrl}</span>
+        </p>
 
         {!aiResponse ? (
           <>
             {!showTodoInput ? (
-              <>
-                {/* Option 1: AI Validation */}
-                <div className="mb-4">
-                  <label className="block mb-4 text-foreground font-medium text-lg">
-                    Why do you want to access this? Don't lie to yourself.
-                  </label>
-                  <Input
-                    ref={reasonInputRef}
-                    type="text"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSubmitReason()}
-                    placeholder="Why disrupt your focus?"
-                    disabled={loading}
-                  />
-                </div>
-
-                {error && <p className="text-destructive mb-4">{error}</p>}
-
-                <Button
-                  onClick={handleSubmitReason}
-                  disabled={!reason.trim() || loading}
-                  variant="default"
-                  className="w-full mb-4"
-                >
-                  {loading ? 'Validating...' : 'Submit'}
-                  {!loading && (
-                    <CornerDownLeft size={18} className="opacity-60" />
-                  )}
-                </Button>
-
-                {/* Separator and alternative options */}
-                <div className="border-t-2 border-border pt-4">
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={() => setShowTodoInput(true)}
-                      variant="default"
-                      className="flex-1"
-                    >
-                      Remind Me Later
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        console.log(
-                          '🔙 Going back 2 steps in history to avoid redirect loop'
-                        );
-                        window.history.go(-2);
-                      }}
-                      disabled={loading}
-                      variant="secondary"
-                      className="flex-1"
-                    >
-                      Go Back
-                    </Button>
-                  </div>
-                </div>
-              </>
+              <ReasonForm
+                reason={reason}
+                setReason={setReason}
+                onSubmit={handleSubmitReason}
+                loading={loading}
+                error={error}
+                inputRef={reasonInputRef}
+                onShowTodoInput={() => setShowTodoInput(true)}
+                onGoBack={handleGoBack}
+              />
             ) : (
-              <>
-                {/* Remind Me Later Form */}
-                <div>
-                  <label className="block mb-4 text-foreground font-medium text-lg">
-                    Optional note:
-                  </label>
-                  <Input
-                    type="text"
-                    autoFocus={true}
-                    value={todoNote}
-                    onChange={(e) => setTodoNote(e.target.value)}
-                    placeholder="Why do you want to access this later?"
-                    className="mb-4"
-                  />
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={handleSaveTodoReminder}
-                      variant="default"
-                      className="flex-1"
-                    >
-                      Save Todo Reminder
-                    </Button>
-                    <Button
-                      onClick={() => setShowTodoInput(false)}
-                      variant="secondary"
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </>
+              <TodoReminderForm
+                todoNote={todoNote}
+                setTodoNote={setTodoNote}
+                onSave={handleSaveTodoReminder}
+                onCancel={() => setShowTodoInput(false)}
+              />
             )}
           </>
         ) : (
-          <>
-            {/* AI Response Display */}
-            <div className="mb-8 p-6 bg-muted rounded-lg text-left">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="text-3xl">{aiResponse.valid ? '✅' : '❌'}</div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-foreground mb-2">
-                    {aiResponse.valid ? 'Approved' : 'Denied'}
-                    {reason ? `: ${reason}` : ''}
-                  </h2>
-                  <p className="text-foreground text-lg leading-relaxed">
-                    {aiResponse.message}
-                  </p>
-                  {aiResponse.valid && (
-                    <p className="text-emerald-600 dark:text-emerald-400 font-semibold mt-3 text-lg">
-                      Time allocated: {formatTime(aiResponse.seconds)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4 justify-center">
-              {aiResponse.valid ? (
-                <>
-                  <Button
-                    onClick={handleConfirmUnblock}
-                    variant="default"
-                    size="lg"
-                  >
-                    Unblock for {formatTime(aiResponse.seconds)}
-                    <CornerDownLeft size={18} className="opacity-60" />
-                  </Button>
-                  <Button onClick={handleReset} variant="secondary" size="lg">
-                    Try different reason
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={() => {
-                      setTodoNote(reason); // Auto-fill with original reason
-                      setShowTodoInput(true);
-                      setAiResponse(null); // Hide AI response
-                    }}
-                    variant="default"
-                    size="lg"
-                  >
-                    Add to To-Do List
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      console.log(
-                        '🔙 Going back 2 steps in history to avoid redirect loop'
-                      );
-                      window.history.go(-2);
-                    }}
-                    variant="secondary"
-                    size="lg"
-                  >
-                    Go Back
-                  </Button>
-                </>
-              )}
-            </div>
-          </>
+          <AIResponseDisplay
+            aiResponse={aiResponse}
+            reason={reason}
+            formatTime={formatTime}
+            onConfirmUnblock={handleConfirmUnblock}
+            onReset={handleReset}
+            onAddToTodo={handleAddToTodo}
+            onGoBack={handleGoBack}
+          />
         )}
       </div>
     </div>

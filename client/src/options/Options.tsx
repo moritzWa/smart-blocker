@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import TodoRemindersList from './components/TodoRemindersList';
 import UnblockedSitesList from './components/UnblockedSitesList';
-import AllowOnlyModeToggle from './components/AllowOnlyModeToggle';
+import StrictModeToggle from './components/StrictModeToggle';
 import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ interface TodoReminder {
 export default function Options() {
   const [allowedSites, setAllowedSites] = useState('');
   const [blockedSites, setBlockedSites] = useState('');
-  const [allowOnlyMode, setAllowOnlyMode] = useState(false);
+  const [strictMode, setStrictMode] = useState(false);
   const [status, setStatus] = useState('');
   const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
   const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
@@ -59,23 +59,23 @@ export default function Options() {
     return () => clearTimeout(timer);
   }, [blockedSites]);
 
-  // Auto-save allowOnlyMode immediately when toggled
+  // Auto-save strictMode immediately when toggled
   useEffect(() => {
     // Skip on initial load - check if we've loaded settings at least once
     if (allowedSites === '' && blockedSites === '') return;
     saveSettings();
-  }, [allowOnlyMode]);
+  }, [strictMode]);
 
   async function loadSettings() {
     const result = await chrome.storage.sync.get({
       allowedSites: [],
       blockedSites: [],
-      allowOnlyMode: false,
+      strictMode: false,
     });
 
     setAllowedSites((result.allowedSites as string[]).join('\n'));
     setBlockedSites((result.blockedSites as string[]).join('\n'));
-    setAllowOnlyMode(result.allowOnlyMode as boolean);
+    setStrictMode(result.strictMode as boolean);
   }
 
   async function loadUnblockedSites() {
@@ -111,7 +111,7 @@ export default function Options() {
     await chrome.storage.sync.set({
       allowedSites: allowedSitesList,
       blockedSites: blockedSitesList,
-      allowOnlyMode,
+      strictMode,
     });
 
     // Notify service worker to check all open tabs
@@ -170,7 +170,7 @@ export default function Options() {
   function parseSiteBlockFormat(text: string): {
     allowedSites: string[];
     blockedSites: string[];
-    allowOnlyMode: boolean;
+    strictMode: boolean;
   } {
     const lines = text
       .split('\n')
@@ -178,11 +178,11 @@ export default function Options() {
       .filter((l) => l);
     const allowedSites: string[] = [];
     const blockedSites: string[] = [];
-    let allowOnlyMode = false;
+    let strictMode = false;
 
-    // Check if first line is '*' (Allow-Only Mode)
+    // Check if first line is '*' (Strict Mode)
     if (lines[0] === '*') {
-      allowOnlyMode = true;
+      strictMode = true;
       lines.shift(); // Remove the '*' line
     }
 
@@ -197,7 +197,7 @@ export default function Options() {
       }
     }
 
-    return { allowedSites, blockedSites, allowOnlyMode };
+    return { allowedSites, blockedSites, strictMode };
   }
 
   function handleImport(importText: string) {
@@ -216,8 +216,8 @@ export default function Options() {
 
     setAllowedSites(mergedAllowed.join('\n'));
     setBlockedSites(mergedBlocked.join('\n'));
-    if (parsed.allowOnlyMode) {
-      setAllowOnlyMode(true);
+    if (parsed.strictMode) {
+      setStrictMode(true);
     }
 
     // Clear import UI
@@ -275,7 +275,7 @@ export default function Options() {
       <div className="max-w-3xl mx-auto rounded-lg p-8">
         <div className="flex items-center gap-4 mb-6">
           <img
-            src={allowOnlyMode ? '/logo-allow-only-mode.png' : '/logo.png'}
+            src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
             alt="AI Site Blocker"
             className="w-12 h-12"
           />
@@ -296,9 +296,9 @@ export default function Options() {
           formatTimeRemaining={formatTimeRemaining}
         />
 
-        <AllowOnlyModeToggle
-          allowOnlyMode={allowOnlyMode}
-          onChange={setAllowOnlyMode}
+        <StrictModeToggle
+          strictMode={strictMode}
+          onChange={setStrictMode}
         />
 
         <SiteListInput

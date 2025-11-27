@@ -46,15 +46,15 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
     allowedSites: [],
     blockedSites: [],
     temporaryUnblocks: {},
-    allowOnlyMode: false,
+    strictMode: false,
   });
 
   const allowedSites = result.allowedSites as string[];
   const blockedSites = result.blockedSites as string[];
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
-  const allowOnlyMode = result.allowOnlyMode as boolean;
+  const strictMode = result.strictMode as boolean;
 
-  console.log('🔍 Checking:', domain, { allowOnlyMode, allowedSites, blockedSites });
+  console.log('🔍 Checking:', domain, { strictMode, allowedSites, blockedSites });
 
   // Check if temporarily unblocked
   if (temporaryUnblocks[domain]) {
@@ -74,13 +74,13 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
   // Check if in allowed list
   const isAllowed = allowedSites.some(pattern => matchesDomain(domain, pattern));
 
-  if (allowOnlyMode) {
-    // Allow-Only Mode: Block everything EXCEPT allowed sites
+  if (strictMode) {
+    // Strict Mode: Block everything EXCEPT allowed sites
     if (isAllowed) {
-      console.log(`✓ Allowed in Allow-Only Mode: ${domain}`);
+      console.log(`✓ Allowed in Strict Mode: ${domain}`);
       return { blocked: false };
     } else {
-      console.log(`🚫 Blocked in Allow-Only Mode: ${domain}`);
+      console.log(`🚫 Blocked in Strict Mode: ${domain}`);
       return { blocked: true };
     }
   } else {
