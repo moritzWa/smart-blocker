@@ -28,6 +28,7 @@ export default function Options() {
   const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
   const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
   const [showImport, setShowImport] = useState(false);
+  const [highlightTodos, setHighlightTodos] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -66,6 +67,20 @@ export default function Options() {
     if (allowedSites === '' && blockedSites === '') return;
     saveSettings();
   }, [strictMode]);
+
+  // Check URL params for highlight todos (first-time reminder onboarding)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('highlightTodos') === 'true') {
+      setHighlightTodos(true);
+      // Remove highlight after 8 seconds
+      setTimeout(() => {
+        setHighlightTodos(false);
+      }, 8000);
+      // Clean up URL without reloading
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   async function loadSettings() {
     const result = await chrome.storage.sync.get({
@@ -299,6 +314,7 @@ export default function Options() {
             onRemove={handleRemoveTodoReminder}
             onOpen={handleOpenTodoUrl}
             onCopy={handleCopyTodos}
+            highlight={highlightTodos}
           />
 
           <UnblockedSitesList

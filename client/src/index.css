@@ -92,3 +92,28 @@
   --color-ring: var(--ring);
   --radius: var(--radius);
 }
+
+@keyframes pulse-purple {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: oklch(0.97 0.05 300);
+  }
+}
+
+.dark {
+  @keyframes pulse-purple {
+    0%, 100% {
+      background-color: transparent;
+    }
+    50% {
+      background-color: oklch(0.25 0.08 300 / 0.3);
+    }
+  }
+}
+
+.animate-pulse-purple {
+  animation: pulse-purple 2s ease-in-out infinite;
+}
+

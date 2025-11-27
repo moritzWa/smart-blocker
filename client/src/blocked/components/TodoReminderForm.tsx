@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -14,6 +15,18 @@ export default function TodoReminderForm({
   onSave,
   onCancel,
 }: TodoReminderFormProps) {
+  // Handle Enter key to save
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        onSave();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [onSave]);
+
   return (
     <div>
       <label className="block mb-4 text-foreground font-medium text-lg">
@@ -28,11 +41,11 @@ export default function TodoReminderForm({
         className="mb-4"
       />
       <div className="flex gap-3">
-        <Button onClick={onSave} variant="default" className="flex-1">
-          Save Todo Reminder
-        </Button>
         <Button onClick={onCancel} variant="secondary" className="flex-1">
           Cancel
+        </Button>
+        <Button onClick={onSave} variant="default" className="flex-1">
+          Save Todo Reminder
         </Button>
       </div>
     </div>

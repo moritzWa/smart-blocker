@@ -118,15 +118,29 @@ export default function BlockedPage() {
   };
 
   const handleSaveTodoReminder = async () => {
+    // Check if this is the first time creating a reminder
+    const result = await chrome.storage.sync.get({ hasCreatedFirstReminder: false });
+    const isFirstReminder = !result.hasCreatedFirstReminder;
+
     await chrome.runtime.sendMessage({
       type: 'ADD_TODO_REMINDER',
       url: blockedUrl,
       note: todoNote.trim() || undefined,
     });
 
-    // Go back 2 steps to avoid redirect loop (skip blocked URL + blocked page)
-    console.log('🔙 Going back 2 steps in history after saving todo');
-    window.history.go(-2);
+    if (isFirstReminder) {
+      // Mark that user has created their first reminder
+      await chrome.storage.sync.set({ hasCreatedFirstReminder: true });
+
+      // Open options page with highlight parameter in URL
+      console.log('🎉 First reminder! Opening options page to show where reminders go');
+      const optionsUrl = chrome.runtime.getURL('src/options/options.html') + '?highlightTodos=true';
+      chrome.tabs.create({ url: optionsUrl });
+    } else {
+      // Go back 2 steps to avoid redirect loop (skip blocked URL + blocked page)
+      console.log('🔙 Going back 2 steps in history after saving todo');
+      window.history.go(-2);
+    }
   };
 
   const handleReset = () => {
