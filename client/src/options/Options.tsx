@@ -306,7 +306,7 @@ export default function Options() {
             formatTimeRemaining={formatTimeRemaining}
           />
 
-          <Card className="p-4 flex flex-col gap-4">
+          <Card className="p-4 flex flex-col gap-4 rounded-xl">
             <StrictModeToggle
               strictMode={strictMode}
               onChange={setStrictMode}
@@ -321,7 +321,7 @@ export default function Options() {
             />
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 rounded-xl">
             <SiteListInput
               label="Blocked Sites"
               description="One site per line. These sites will be blocked."
