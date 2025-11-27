@@ -368,6 +368,7 @@ export default function Options() {
                 href="https://chromewebstore.google.com/detail/ai-site-blocker/ibmmihgadnkilmknmfmohlclogcifboj"
                 target="_blank"
                 rel="noopener noreferrer"
+                className="cursor-pointer text-muted-foreground"
               >
                 Review Extension
               </a>
@@ -375,7 +376,7 @@ export default function Options() {
             <Button
               variant="link"
               size="sm"
-              className="cursor-pointer"
+              className="cursor-pointer text-muted-foreground"
               onClick={() => setShowImport(!showImport)}
             >
               Import from SiteBlock
@@ -383,10 +384,18 @@ export default function Options() {
             <Button
               variant="link"
               size="sm"
-              className="cursor-pointer"
+              className="cursor-pointer text-muted-foreground"
               onClick={handleSeedTodos}
             >
               Seed ToDos
+            </Button>
+            <Button
+              variant="link"
+              size="sm"
+              className="cursor-pointer text-muted-foreground"
+              onClick={() => window.open('https://moritzw.com', '_blank')}
+            >
+              Made by Moritz W.
             </Button>
           </div>
         </div>
