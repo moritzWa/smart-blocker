@@ -123,6 +123,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await initializeDefaultSites();
   }
+
+  // Set uninstall URL to collect feedback
+  chrome.runtime.setUninstallURL('https://ai-site-blocker-feedback.vercel.app');
+
   // Update icon on install/update
   updateExtensionIcon();
 });
@@ -313,8 +317,9 @@ async function checkAllOpenTabs(): Promise<{ success: boolean }> {
 
   for (const tab of tabs) {
     if (tab.id && tab.url) {
-      // Skip chrome:// URLs (but not extension pages - we need to handle blocked.html)
-      if (tab.url.startsWith('chrome://')) {
+      // Skip chrome:// and chrome-extension:// URLs (except blocked.html which we handle below)
+      if (tab.url.startsWith('chrome://') ||
+          (tab.url.startsWith('chrome-extension://') && !tab.url.includes('blocked.html'))) {
         continue;
       }
 
