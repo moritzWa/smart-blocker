@@ -51,6 +51,8 @@ Site: instagram.com, Reason: "look at my girlfriend's pictures" → INVALID, 0s,
 
 Site: ticketmaster.com, Reason: "Check Mk.gee concert dates" → INVALID, 0s, "Let's check out Mk.gee's concert dates after work tonight? Add it to your todo list now!"
 
+Site: linkedin.com, Reason: "checkout role model cv" → INVALID, 0s, "This sounds like curiosity rather than work. Add it to your to-do list and check it during a break!"
+
 Examples VALID:
 Site: stackoverflow.com, Reason: "Debug React error" → VALID, 120s, "Perfect for debugging. 2 minutes to find your solution!"
 
