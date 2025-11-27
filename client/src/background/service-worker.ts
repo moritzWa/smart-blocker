@@ -2,7 +2,7 @@ import { checkIfBlocked, normalizeUrl } from './utils/blocking';
 import { validateUnblockReason } from './services/ai-validation';
 import { unblockSite, addTodoReminder, removeTodoReminder } from './services/storage';
 
-console.log('AI Site Blocker service worker loaded');
+console.log('Focus Shield service worker loaded');
 
 // Badge update interval ID
 let badgeUpdateInterval: number | null = null;

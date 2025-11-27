@@ -279,11 +279,11 @@ export default function Options() {
             <div className="flex flex-row items-center gap-4">
               <img
                 src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
-                alt="AI Site Blocker"
+                alt="Focus Shield"
                 className="w-12 h-12"
               />
               <h1 className="text-3xl font-bold text-foreground">
-                AI Site Blocker Settings
+                Focus Shield Settings
               </h1>
             </div>
 
@@ -349,8 +349,7 @@ export default function Options() {
             </Button>
             <Button variant="link" size="sm" asChild>
               <a
-                // TODO: Add link to extension review page once submitted and accepted
-                href="https://moritzw.com"
+                href="https://chromewebstore.google.com/detail/ai-site-blocker/ibmmihgadnkilmknmfmohlclogcifboj"
                 target="_blank"
                 rel="noopener noreferrer"
               >

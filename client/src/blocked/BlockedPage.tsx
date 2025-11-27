@@ -149,12 +149,12 @@ export default function BlockedPage() {
       <div className="text-center max-w-2xl px-10 py-12">
         <img
           src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
-          alt="AI Site Blocker"
+          alt="Focus Shield"
           className="w-32 h-32 mx-auto mb-6"
         />
 
         <h1 className="text-5xl font-bold text-foreground mb-4">
-          {strictMode ? 'AI Site Blocker - Strict Mode' : 'AI Site Blocker'}
+          {strictMode ? 'Focus Shield - Strict Mode' : 'Focus Shield'}
         </h1>
 
         <p className="text-2xl text-foreground mb-10">

@@ -47,7 +47,7 @@ For APPROVALS (be concise):
 - Reinforce the work-related purpose
 
 Examples INVALID:
-Site: instagram.com, Reason: "look at my girlfriend's pictures" → INVALID, 0s, "Your girlfriend would be proud if you stayed focused. Lock in!"
+Site: instagram.com, Reason: "look at my girlfriend's IG pictures" → INVALID, 0s, "Your girlfriend would be proud if you stayed focused. Lock in!"
 
 Site: ticketmaster.com, Reason: "Check Mk.gee concert dates" → INVALID, 0s, "Let's check out Mk.gee's concert dates after work tonight? Add it to your todo list now!"
 

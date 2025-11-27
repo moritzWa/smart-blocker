@@ -13,7 +13,7 @@ ${whyUninstall}
 What can we improve?
 ${improvements}`;
 
-    const mailtoLink = `mailto:wallawitsch@gmail.com?subject=Smart Blocker Uninstall Feedback&body=${encodeURIComponent(emailBody)}`;
+    const mailtoLink = `mailto:wallawitsch@gmail.com?subject=Focus Shield Uninstall Feedback&body=${encodeURIComponent(emailBody)}`;
 
     // Create an anchor element and click it (more reliable than window.location.href)
     const anchor = document.createElement('a');
@@ -28,7 +28,7 @@ ${improvements}`;
           We're sorry to see you go
         </h1>
         <p className="text-gray-600 dark:text-gray-300 text-center mb-8">
-          Your feedback helps us improve Smart Blocker for everyone
+          Your feedback helps us improve Focus Shield for everyone
         </p>
 
         <div className="space-y-6">
@@ -88,7 +88,7 @@ ${improvements}`;
               rel="noopener noreferrer"
               className="block w-full text-center bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold py-4 px-6 rounded-lg transition-colors text-lg"
             >
-              Reinstall AI Site Blocker
+              Reinstall Focus Shield
             </a>
           </div>
         </div>

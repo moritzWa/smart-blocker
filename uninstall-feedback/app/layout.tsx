@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Smart Blocker - Uninstall Feedback",
-  description: "Help us improve Smart Blocker by sharing your feedback",
+  title: "Focus Shield - Uninstall Feedback",
+  description: "Help us improve Focus Shield by sharing your feedback",
 };
 
 export default function RootLayout({

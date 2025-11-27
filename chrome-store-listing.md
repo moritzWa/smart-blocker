@@ -2,15 +2,15 @@
 
 ## Extension Name
 
-**AI Site Blocker**
+**Focus Shield - AI Site & Distraction Blocker**
 
-Clean, simple, SEO-friendly. Emphasizes the key differentiator (AI validation) without unnecessary complexity.
+Includes key SEO terms: Focus, Shield, AI, Site, Distraction, Blocker (45 chars, under 75 limit)
 
 ---
 
 ## Short Description (132 character limit)
 
-AI-powered distraction bouncer. Smart time-boxing, auto-reblock, dark mode. Minimal interface, maximum focus. (122 chars)
+AI bouncer blocks distractions. Type why you need access - AI grants precise time or says no. Auto-reblock. (108 chars)
 
 ---
 
@@ -18,17 +18,21 @@ AI-powered distraction bouncer. Smart time-boxing, auto-reblock, dark mode. Mini
 
 THE FIRST SITE BLOCKER WITH AN AI BOUNCER
 
-Block distracting sites, but with intelligence. When you need access, the AI decides if your reason is legitimate and grants precisely the time you need. No manual timers. No workarounds. No willpower battles.
+Instead of outright blocking distracting sites, our AI bouncer asks WHY you want to visit. Based on your reasoning, it either blocks access or grants a specific duration. No manual timers. No workarounds. No willpower battles.
+
+THE SECRET? TYPING YOUR REASON MAKES YOU SELF-AWARE.
+
+It's easy to lie to yourself clicking "just 5 more minutes." But when you have to TYPE "check how many likes my post got" or "scroll Instagram" - you suddenly realize: is this really what I need right now? The AI bouncer forces honest self-reflection before every distraction.
 
 HOW IT WORKS:
 
-🧠 AI-DISTRACTION BOUNCER
-Tell the AI why you need to unblock a site. It evaluates your reason and grants appropriate time.
+🧠 AI DISTRACTION BOUNCER
+Type why you need to unblock a site. The AI evaluates your reason and grants appropriate time.
 
 • "Watch React tutorial" → ✅ 15 minutes
-• "Bored" → ❌ Stay focused
+• "Check colleague's LinkedIn profile" → ⏰ Save to To-Do Reminders instead
 • "Check weather" → ✅ 20 seconds
-• "Browse YouTube" → ❌ Get back to work
+• "Scroll X feed" → ❌ Stay focused
 
 ⏱️ SMART TIME-BOXING
 The AI determines how long you actually need. Quick lookup? 30 seconds. Following a tutorial? 15 minutes. You don't set timers—the AI does.
@@ -36,14 +40,14 @@ The AI determines how long you actually need. Quick lookup? 30 seconds. Followin
 🔒 AUTO-REBLOCK
 When time expires, all tabs redirect automatically. No "just 5 more minutes." No manual reblocking. Your focus session continues uninterrupted.
 
-📝 TODO LIST FOR DISTRACTIONS
-Found something interesting? Save it with one click. Getting Things Done-style: capture it, clear your mind, check it during your break—not during deep work.
+📝 TO-DO REMINDERS
+Found something interesting but not urgent? Save it with one click. Getting Things Done-style: capture the distraction, clear your mind, check it during your break—not during deep work. The AI can even suggest saving instead of granting immediate access.
 
 OTHER FEATURES:
-✅ Allow-Only Mode - Block everything except approved work sites
-✅ Dark Mode - For night sessions
-✅ SiteBlock Import - Migrate your settings in seconds
-✅ No tracking or analytics - Your data stays private
+🛡️ Strict Mode - Block EVERYTHING except your allowed work sites
+🌙 Dark Mode - For comfortable night sessions
+📥 SiteBlock Import - Migrate your settings in seconds
+🔒 Zero tracking - Your data stays 100% private
 
 PERFECT FOR:
 • Students fighting social media during study sessions
@@ -72,9 +76,9 @@ No analytics dashboards. No Pomodoro timers. No gamification. Just intelligent b
 
 ## Search Keywords
 
-Primary: site blocker, website blocker, block websites, AI blocker, productivity, focus mode
-Secondary: distraction blocker, smart blocker, stay focused, time management, block sites
-Long-tail: AI website blocker, temporary site unblock, auto reblock sites, block distracting websites
+Primary: site blocker, website blocker, distraction blocker, focus, AI blocker, productivity
+Secondary: block websites, stay focused, focus mode, smart blocker, time management, block sites
+Long-tail: AI website blocker, temporary site unblock, auto reblock sites, block distracting websites, focus shield
 
 ---
 

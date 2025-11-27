@@ -1,6 +1,6 @@
-# Smart Blocker
+# Focus Shield - AI Site & Distraction Blocker
 
-Chrome extension to block distracting websites with temporary unblock functionality.
+AI-powered Chrome extension to block distracting websites with smart temporary unblock functionality.
 
 ## Project Structure
 
