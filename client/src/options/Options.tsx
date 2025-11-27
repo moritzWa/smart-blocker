@@ -288,7 +288,7 @@ export default function Options() {
             </div>
 
             {status && (
-              <div className="text-emerald-600 dark:text-emerald-400 font-medium text-md">
+              <div className="text-emerald-600 dark:text-emerald-400 font-medium text-xl">
                 {status}
               </div>
             )}
@@ -337,8 +337,8 @@ export default function Options() {
             onImport={handleImport}
           />
 
-          <div className="flex gap-4 text-center">
-            <Button variant="link" size="sm" asChild>
+          <div className="flex gap-4 justify-between text-center">
+            {/* <Button variant="link" size="sm" asChild>
               <a
                 href="https://github.com/moritzWa/smart-blocker"
                 target="_blank"
@@ -346,7 +346,7 @@ export default function Options() {
               >
                 Contribute on GitHub
               </a>
-            </Button>
+            </Button> */}
             <Button variant="link" size="sm" asChild>
               <a
                 href="https://chromewebstore.google.com/detail/ai-site-blocker/ibmmihgadnkilmknmfmohlclogcifboj"

@@ -1,4 +1,4 @@
-import { type RefObject } from 'react';
+import { type RefObject, useEffect } from 'react';
 import { CornerDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,22 @@ export default function ReasonForm({
   onShowTodoInput,
   onGoBack,
 }: ReasonFormProps) {
+  // Keyboard shortcuts for navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (loading) return;
+
+      if (e.key === 'ArrowLeft') {
+        onGoBack();
+      } else if (e.key === 'ArrowRight') {
+        onShowTodoInput();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [loading, onGoBack, onShowTodoInput]);
+
   return (
     <>
       {/* Option 1: AI Validation */}
@@ -50,20 +66,13 @@ export default function ReasonForm({
         variant="default"
         className="w-full mb-4"
       >
-        {loading ? 'Validating...' : 'Submit'}
-        {!loading && <CornerDownLeft size={18} className="opacity-60" />}
+        Submit
+        <CornerDownLeft size={18} className="opacity-60" />
       </Button>
 
       {/* Separator and alternative options */}
       <div className="border-t-2 border-border pt-4">
         <div className="flex gap-3">
-          <Button
-            onClick={onShowTodoInput}
-            variant="default"
-            className="flex-1"
-          >
-            Remind Me Later
-          </Button>
           <Button
             onClick={onGoBack}
             disabled={loading}
@@ -71,6 +80,13 @@ export default function ReasonForm({
             className="flex-1"
           >
             Go Back
+          </Button>
+          <Button
+            onClick={onShowTodoInput}
+            variant="default"
+            className="flex-1"
+          >
+            Remind Me Later
           </Button>
         </div>
       </div>

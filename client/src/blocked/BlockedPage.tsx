@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import ReasonForm from './components/ReasonForm';
 import TodoReminderForm from './components/TodoReminderForm';
 import AIResponseDisplay from './components/AIResponseDisplay';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AIResponse {
   valid: boolean;
@@ -29,8 +30,10 @@ export default function BlockedPage() {
 
     try {
       const urlObj = new URL(url);
-      // Show hostname + path + query params (but not protocol)
-      setDisplayUrl(urlObj.hostname + urlObj.pathname + urlObj.search);
+      // Remove www. prefix and trailing slash for cleaner display
+      const hostname = urlObj.hostname.replace(/^www\./, '');
+      const pathname = urlObj.pathname.replace(/\/$/, '');
+      setDisplayUrl(hostname + pathname + urlObj.search);
     } catch {
       setDisplayUrl(url);
     }
@@ -161,7 +164,25 @@ export default function BlockedPage() {
           Blocked: <span className="text-muted-foreground">{displayUrl}</span>
         </p>
 
-        {!aiResponse ? (
+        {loading && !aiResponse ? (
+          // Loading skeleton
+          <>
+            <div className="mb-8 p-6 bg-muted rounded-lg">
+              <div className="flex items-start gap-3">
+                <Skeleton className="w-8 h-8 rounded-full" />
+                <div className="flex-1 space-y-3">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-4/5" />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4 justify-center">
+              <Skeleton className="h-12 w-48" />
+              <Skeleton className="h-12 w-48" />
+            </div>
+          </>
+        ) : !aiResponse ? (
           <>
             {!showTodoInput ? (
               <ReasonForm
