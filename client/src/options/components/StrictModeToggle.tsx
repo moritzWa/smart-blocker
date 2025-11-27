@@ -10,7 +10,7 @@ export default function StrictModeToggle({
   onChange,
 }: StrictModeToggleProps) {
   return (
-    <section className="mb-6 p-4 rounded-lg border bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800">
+    <section className="p-4 rounded-lg border bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-semibold text-emerald-900 dark:text-emerald-100 mb-1">

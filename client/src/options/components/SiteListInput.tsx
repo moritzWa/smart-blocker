@@ -18,13 +18,9 @@ export default function SiteListInput({
   rows = 5,
 }: SiteListInputProps) {
   return (
-    <section className="mb-6">
-      <h2 className="text-xl font-semibold text-foreground mb-2">
-        {label}
-      </h2>
-      <p className="text-sm text-muted-foreground mb-3">
-        {description}
-      </p>
+    <section>
+      <h2 className="text-xl font-semibold text-foreground mb-2">{label}</h2>
+      <p className="text-sm text-muted-foreground mb-3">{description}</p>
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}

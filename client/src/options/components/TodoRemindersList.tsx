@@ -37,7 +37,7 @@ export default function TodoRemindersList({
   };
 
   return (
-    <section className="mb-6">
+    <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-semibold text-foreground">
           To-Do Reminders

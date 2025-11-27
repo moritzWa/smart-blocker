@@ -32,7 +32,7 @@ export default function SiteBlockImport({
   }
 
   return (
-    <section className="mb-6 p-4 bg-muted border border-border rounded-lg">
+    <section className="p-4 bg-muted border border-border rounded-lg">
       <h2 className="text-xl font-semibold text-foreground mb-2">
         Import from SiteBlock
       </h2>

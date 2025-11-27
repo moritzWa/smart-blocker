@@ -5,6 +5,7 @@ import StrictModeToggle from './components/StrictModeToggle';
 import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface UnblockedSite {
   domain: string;
@@ -273,98 +274,106 @@ export default function Options() {
   return (
     <div className="min-h-screen bg-background py-10">
       <div className="max-w-3xl mx-auto rounded-lg p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <img
-            src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
-            alt="AI Site Blocker"
-            className="w-12 h-12"
-          />
-          <h1 className="text-3xl font-bold text-foreground">
-            AI Site Blocker Settings
-          </h1>
-        </div>
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-end gap-4">
+            <div className="flex flex-row items-center gap-4">
+              <img
+                src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
+                alt="AI Site Blocker"
+                className="w-12 h-12"
+              />
+              <h1 className="text-3xl font-bold text-foreground">
+                AI Site Blocker Settings
+              </h1>
+            </div>
 
-        <TodoRemindersList
-          todoReminders={todoReminders}
-          onRemove={handleRemoveTodoReminder}
-          onOpen={handleOpenTodoUrl}
-          onCopy={handleCopyTodos}
-        />
-
-        <UnblockedSitesList
-          unblockedSites={unblockedSites}
-          formatTimeRemaining={formatTimeRemaining}
-        />
-
-        <StrictModeToggle
-          strictMode={strictMode}
-          onChange={setStrictMode}
-        />
-
-        <SiteListInput
-          label="Always Allowed Sites"
-          description="One site per line. These sites will never be blocked."
-          value={allowedSites}
-          onChange={setAllowedSites}
-          placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
-        />
-
-        <SiteListInput
-          label="Blocked Sites"
-          description="One site per line. These sites will be blocked."
-          value={blockedSites}
-          onChange={setBlockedSites}
-          placeholder="youtube.com&#10;tiktok.com&#10;facebook.com"
-        />
-
-        {status && (
-          <div className="mb-6 text-emerald-600 dark:text-emerald-400 font-medium text-sm">
-            {status}
+            {status && (
+              <div className="text-emerald-600 dark:text-emerald-400 font-medium text-md">
+                {status}
+              </div>
+            )}
           </div>
-        )}
 
-        <SiteBlockImport
-          show={showImport}
-          onToggle={() => setShowImport(!showImport)}
-          onImport={handleImport}
-        />
+          <TodoRemindersList
+            todoReminders={todoReminders}
+            onRemove={handleRemoveTodoReminder}
+            onOpen={handleOpenTodoUrl}
+            onCopy={handleCopyTodos}
+          />
 
-        <div className="mt-8 flex gap-4 pt-6 border-t border-border text-center">
-          <Button variant="link" size="sm" asChild>
-            <a
-              href="https://github.com/moritzWa/smart-blocker"
-              target="_blank"
-              rel="noopener noreferrer"
+          <UnblockedSitesList
+            unblockedSites={unblockedSites}
+            formatTimeRemaining={formatTimeRemaining}
+          />
+
+          <Card className="p-4 flex flex-col gap-4">
+            <StrictModeToggle
+              strictMode={strictMode}
+              onChange={setStrictMode}
+            />
+
+            <SiteListInput
+              label="Always Allowed Sites"
+              description="One site per line. These sites will never be blocked."
+              value={allowedSites}
+              onChange={setAllowedSites}
+              placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
+            />
+          </Card>
+
+          <Card className="p-4">
+            <SiteListInput
+              label="Blocked Sites"
+              description="One site per line. These sites will be blocked."
+              value={blockedSites}
+              onChange={setBlockedSites}
+              placeholder="youtube.com&#10;tiktok.com&#10;facebook.com"
+            />
+          </Card>
+
+          <SiteBlockImport
+            show={showImport}
+            onToggle={() => setShowImport(!showImport)}
+            onImport={handleImport}
+          />
+
+          <div className="flex gap-4 text-center">
+            <Button variant="link" size="sm" asChild>
+              <a
+                href="https://github.com/moritzWa/smart-blocker"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Contribute on GitHub
+              </a>
+            </Button>
+            <Button variant="link" size="sm" asChild>
+              <a
+                // TODO: Add link to extension review page once submitted and accepted
+                href="https://moritzw.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Review Extension
+              </a>
+            </Button>
+            <Button
+              variant="link"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => setShowImport(!showImport)}
             >
-              Contribute on GitHub
-            </a>
-          </Button>
-          <Button variant="link" size="sm" asChild>
-            <a
-              // TODO: Add link to extension review page once submitted and accepted
-              href="https://moritzw.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              Import from SiteBlock
+            </Button>
+            <Button
+              variant="link"
+              size="sm"
+              className="cursor-pointer"
+              onClick={handleSeedTodos}
             >
-              Review Extension
-            </a>
-          </Button>
-          <Button
-            variant="link"
-            size="sm"
-            className="cursor-pointer"
-            onClick={() => setShowImport(!showImport)}
-          >
-            Import from SiteBlock
-          </Button>
-          <Button
-            variant="link"
-            size="sm"
-            className="cursor-pointer"
-            onClick={handleSeedTodos}
-          >
-            Seed ToDos
-          </Button>
+              Seed ToDos
+            </Button>
+          </div>
         </div>
       </div>
     </div>
