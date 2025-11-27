@@ -6,15 +6,16 @@ export default function UninstallFeedback() {
   const [whyUninstall, setWhyUninstall] = useState('');
   const [improvements, setImprovements] = useState('');
 
-  const emailBody = `Why did you uninstall?
-${whyUninstall}
+  const handleSendEmail = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
 
-What can we improve?
-${improvements}`;
+    // Use %0D%0A for proper line breaks per RFC6068
+    const emailBody = `Why did you uninstall?%0D%0A${encodeURIComponent(whyUninstall)}%0D%0A%0D%0AWhat can we improve?%0D%0A${encodeURIComponent(improvements)}`;
 
-  const mailtoLink = `mailto:wallawitsch@gmail.com?subject=Focus Shield Uninstall Feedback&body=${encodeURIComponent(
-    emailBody
-  )}`;
+    const mailtoLink = `mailto:wallawitsch@gmail.com?subject=${encodeURIComponent('Focus Shield Uninstall Feedback')}&body=${emailBody}`;
+
+    window.location.href = mailtoLink;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-6">
@@ -61,16 +62,17 @@ ${improvements}`;
             />
           </div>
 
-          <a
-            href={mailtoLink}
+          <button
+            onClick={handleSendEmail}
+            disabled={!whyUninstall.trim() || !improvements.trim()}
             className={`block w-full text-center font-semibold py-4 px-6 rounded-lg transition-colors text-lg ${
               !whyUninstall.trim() || !improvements.trim()
-                ? 'bg-gray-400 cursor-not-allowed pointer-events-none text-white'
+                ? 'bg-gray-400 cursor-not-allowed text-white'
                 : 'bg-indigo-600 hover:bg-indigo-700 text-white'
             }`}
           >
             Send Feedback via Email
-          </a>
+          </button>
 
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             This will open your email client with your feedback pre-filled
