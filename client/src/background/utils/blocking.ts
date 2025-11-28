@@ -40,6 +40,12 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
     return { blocked: false };
   }
 
+  // Always allow Chrome Web Store extension page (for leaving reviews)
+  if (url.includes('chromewebstore.google.com/detail/focus-shield-ai-site-dist/ibmmihgadnkilmknmfmohlclogcifboj')) {
+    console.log('✅ Chrome Web Store extension page always allowed');
+    return { blocked: false };
+  }
+
   const domain = normalizeUrl(url);
 
   if (!domain) {

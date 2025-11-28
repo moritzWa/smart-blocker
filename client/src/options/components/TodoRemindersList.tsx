@@ -89,10 +89,10 @@ export default function TodoRemindersList({
                     <span className="text-muted-foreground shrink-0">□</span>
                     {reminder.note ? (
                       <>
-                        <span className="text-foreground text-sm group-hover/item:text-primary transition-colors max-w-[50%] truncate">
+                        <span className="text-foreground text-sm group-hover/item:text-primary transition-colors shrink-0">
                           {reminder.note}
                         </span>
-                        <span className="font-mono text-xs text-muted-foreground truncate">
+                        <span className="font-mono text-xs text-muted-foreground truncate min-w-0">
                           {displayUrl}
                         </span>
                       </>

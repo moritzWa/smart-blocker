@@ -152,14 +152,26 @@ export default function Options() {
   async function handleCopyTodos() {
     const todoText = todoReminders
       .map((reminder) => {
-        const note = reminder.note ? ` ${reminder.note}` : '';
-        return `- [ ]${note} ([${reminder.url}](${reminder.url}))`;
+        const note = reminder.note ? `${reminder.note} ` : '';
+        // Format display URL (remove https:// and www.)
+        const displayUrl = formatDisplayUrl(reminder.url);
+        return `- [ ] ${note}([${displayUrl}](${reminder.url}))`;
       })
       .join('\n');
 
     await navigator.clipboard.writeText(todoText);
     setStatus('Copied to clipboard!');
     setTimeout(() => setStatus(''), 2000);
+  }
+
+  function formatDisplayUrl(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      let hostname = urlObj.hostname.replace(/^www\./, '');
+      return hostname + urlObj.pathname + urlObj.search;
+    } catch {
+      return url;
+    }
   }
 
   function handleImport(importText: string) {
@@ -201,6 +213,14 @@ export default function Options() {
 
     setStatus('Seeded 4 example todos!');
     setTimeout(() => setStatus(''), 2000);
+  }
+
+  function handleReviewClick() {
+    // Open review URL (Chrome Web Store is always whitelisted now)
+    window.open(
+      'https://chromewebstore.google.com/detail/focus-shield-ai-site-dist/ibmmihgadnkilmknmfmohlclogcifboj/reviews',
+      '_blank'
+    );
   }
 
   return (
@@ -280,15 +300,13 @@ export default function Options() {
                 Contribute on GitHub
               </a>
             </Button> */}
-            <Button variant="link" size="sm" asChild>
-              <a
-                href="https://chromewebstore.google.com/detail/ai-site-blocker/ibmmihgadnkilmknmfmohlclogcifboj"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cursor-pointer text-muted-foreground"
-              >
-                Review Extension
-              </a>
+            <Button
+              variant="link"
+              size="sm"
+              className="cursor-pointer text-muted-foreground"
+              onClick={handleReviewClick}
+            >
+              Review Extension
             </Button>
             <Button
               variant="link"

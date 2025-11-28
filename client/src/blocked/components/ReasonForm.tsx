@@ -30,7 +30,10 @@ export default function ReasonForm({
       <div className="mb-4">
         <label className="block mb-4 font-medium text-lg">
           <span className="text-foreground">Why</span>
-          <span className="text-muted-foreground"> do you want to access this? </span>
+          <span className="text-muted-foreground">
+            {' '}
+            do you want to access this?{' '}
+          </span>
           <span className="text-foreground">Don't lie</span>
           <span className="text-muted-foreground"> to yourself.</span>
         </label>
@@ -38,6 +41,7 @@ export default function ReasonForm({
           ref={inputRef}
           type="text"
           value={reason}
+          autoFocus={true}
           onChange={(e) => setReason(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSubmit()}
           placeholder="Why disrupt your focus?"

@@ -3,6 +3,7 @@ import { CheckCircle } from 'lucide-react';
 import ReasonForm from './components/ReasonForm';
 import TodoReminderForm from './components/TodoReminderForm';
 import AIResponseDisplay from './components/AIResponseDisplay';
+import ReviewRequestCard from './components/ReviewRequestCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 
@@ -10,6 +11,17 @@ interface AIResponse {
   valid: boolean;
   seconds: number;
   message: string;
+}
+
+// Helper to check if count is power of 2
+function isPowerOfTwo(n: number): boolean {
+  return n > 0 && (n & (n - 1)) === 0;
+}
+
+// Check if review should be shown based on count and threshold
+function shouldShowReview(count: number, baseThreshold: number): boolean {
+  if (count < baseThreshold) return false;
+  return isPowerOfTwo(count);
 }
 
 export default function BlockedPage() {
@@ -23,6 +35,8 @@ export default function BlockedPage() {
   const [error, setError] = useState<string | null>(null);
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
+  const [showReviewRequest, setShowReviewRequest] = useState(false);
+  const [reviewDismissCount, setReviewDismissCount] = useState(0);
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
   // Update favicon based on strict mode
@@ -44,10 +58,32 @@ export default function BlockedPage() {
       setDisplayUrl(url);
     }
 
-    // Check if strict mode is enabled
-    chrome.storage.sync.get(['strictMode'], (result) => {
-      setStrictMode(!!result.strictMode);
-    });
+    // Load settings and increment blocked page view count
+    chrome.storage.sync.get(
+      {
+        strictMode: false,
+        blockedPageViewCount: 0,
+        reviewDismissCount: 0,
+        reviewDismissedPermanently: false,
+      },
+      async (result) => {
+        setStrictMode(!!result.strictMode);
+        setReviewDismissCount(result.reviewDismissCount as number);
+
+        const newCount = (result.blockedPageViewCount as number) + 1;
+
+        // Increment blocked page view count
+        await chrome.storage.sync.set({ blockedPageViewCount: newCount });
+
+        // Check if we should show review request
+        if (
+          !(result.reviewDismissedPermanently as boolean) &&
+          shouldShowReview(newCount, 4)
+        ) {
+          setShowReviewRequest(true);
+        }
+      }
+    );
 
     // Auto-focus reason input
     setTimeout(() => reasonInputRef.current?.focus(), 100);
@@ -124,9 +160,12 @@ export default function BlockedPage() {
   };
 
   const handleSaveTodoReminder = async () => {
-    // Check if this is the first time creating a reminder
+    // Check if this is the first time creating a reminder and increment count
     const result = await chrome.storage.sync.get({
       hasCreatedFirstReminder: false,
+      reminderCount: 0,
+      reviewDismissCount: 0,
+      reviewDismissedPermanently: false,
     });
     const isFirstReminder = !result.hasCreatedFirstReminder;
 
@@ -135,6 +174,23 @@ export default function BlockedPage() {
       url: blockedUrl,
       note: todoNote.trim() || undefined,
     });
+
+    // Increment reminder count
+    const newReminderCount = (result.reminderCount as number) + 1;
+    await chrome.storage.sync.set({ reminderCount: newReminderCount });
+
+    // Check if we should show review request after saving reminder
+    const shouldShowReviewAfterReminder =
+      !(result.reviewDismissedPermanently as boolean) &&
+      shouldShowReview(newReminderCount, 2);
+
+    if (shouldShowReviewAfterReminder) {
+      // Show review request instead of "Reminder Saved!" + close
+      setReviewDismissCount(result.reviewDismissCount as number);
+      setShowReviewRequest(true);
+      setTodoSaved(true); // Still set this so we know to handle close after review
+      return;
+    }
 
     // Show saved confirmation
     setTodoSaved(true);
@@ -181,6 +237,58 @@ export default function BlockedPage() {
     setAiResponse(null); // Hide AI response
   };
 
+  const handleReviewClick = () => {
+    // Open review URL
+    window.open(
+      'https://chromewebstore.google.com/detail/focus-shield-ai-site-dist/ibmmihgadnkilmknmfmohlclogcifboj/reviews',
+      '_blank'
+    );
+    setShowReviewRequest(false);
+
+    // If we were showing review after saving todo, now close the tab
+    if (todoSaved) {
+      setTimeout(async () => {
+        const tab = await chrome.tabs.getCurrent();
+        if (tab?.id) {
+          chrome.tabs.remove(tab.id);
+        }
+      }, 300);
+    }
+  };
+
+  const handleReviewMaybeLater = async () => {
+    // Increment dismiss count
+    const newDismissCount = reviewDismissCount + 1;
+    await chrome.storage.sync.set({ reviewDismissCount: newDismissCount });
+    setShowReviewRequest(false);
+
+    // If we were showing review after saving todo, now close the tab
+    if (todoSaved) {
+      setTimeout(async () => {
+        const tab = await chrome.tabs.getCurrent();
+        if (tab?.id) {
+          chrome.tabs.remove(tab.id);
+        }
+      }, 1300);
+    }
+  };
+
+  const handleReviewDontAskAgain = async () => {
+    // Permanently dismiss
+    await chrome.storage.sync.set({ reviewDismissedPermanently: true });
+    setShowReviewRequest(false);
+
+    // If we were showing review after saving todo, now close the tab
+    if (todoSaved) {
+      setTimeout(async () => {
+        const tab = await chrome.tabs.getCurrent();
+        if (tab?.id) {
+          chrome.tabs.remove(tab.id);
+        }
+      }, 1300);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center font-sans">
       <div className="text-center max-w-2xl px-10 py-12">
@@ -201,7 +309,15 @@ export default function BlockedPage() {
           </span>
         </p>
 
-        {todoSaved ? (
+        {showReviewRequest ? (
+          // Review request
+          <ReviewRequestCard
+            dismissCount={reviewDismissCount}
+            onReview={handleReviewClick}
+            onMaybeLater={handleReviewMaybeLater}
+            onDontAskAgain={handleReviewDontAskAgain}
+          />
+        ) : todoSaved ? (
           // Success confirmation
           <div className="mb-8 p-6 bg-emerald-100 dark:bg-emerald-950 rounded-lg text-center">
             <CheckCircle className="w-16 h-16 mx-auto mb-3 text-emerald-600 dark:text-emerald-400" />
