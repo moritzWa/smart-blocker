@@ -132,25 +132,26 @@ export default function BlockedPage() {
       note: todoNote.trim() || undefined,
     });
 
-    if (isFirstReminder) {
-      // Mark that user has created their first reminder
-      await chrome.storage.sync.set({ hasCreatedFirstReminder: true });
-
-      // Open options page with highlight parameter in URL
-      console.log(
-        '🎉 First reminder! Opening options page to show where reminders go'
-      );
-      const optionsUrl =
-        chrome.runtime.getURL('src/options/options.html') +
-        '?highlightTodos=true';
-      chrome.tabs.create({ url: optionsUrl });
-    }
-
     // Show saved confirmation
     setTodoSaved(true);
 
-    // Close tab after 2 seconds
+    // After showing confirmation, handle navigation
     setTimeout(async () => {
+      if (isFirstReminder) {
+        // Mark that user has created their first reminder
+        await chrome.storage.sync.set({ hasCreatedFirstReminder: true });
+
+        // Open options page with highlight parameter in URL
+        console.log(
+          '🎉 First reminder! Opening options page to show where reminders go'
+        );
+        const optionsUrl =
+          chrome.runtime.getURL('src/options/options.html') +
+          '?highlightTodos=true';
+        chrome.tabs.create({ url: optionsUrl });
+      }
+
+      // Close current tab
       const tab = await chrome.tabs.getCurrent();
       if (tab?.id) {
         chrome.tabs.remove(tab.id);
