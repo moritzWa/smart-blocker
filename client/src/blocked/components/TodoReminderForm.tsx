@@ -37,7 +37,7 @@ export default function TodoReminderForm({
         autoFocus={true}
         value={todoNote}
         onChange={(e) => setTodoNote(e.target.value)}
-        placeholder="Why do you want to access this later?"
+        placeholder="Context for your reminder"
         className="mb-4"
       />
       <div className="flex gap-3">
