@@ -29,7 +29,7 @@ export default function TodoReminderForm({
 
   return (
     <div>
-      <label className="block mb-4 text-foreground font-medium text-lg">
+      <label className="block mb-4 text-muted-foreground font-medium text-lg">
         Optional note:
       </label>
       <Input

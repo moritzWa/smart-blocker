@@ -24,8 +24,8 @@ export default function ReviewRequestCard({
           Enjoying Focus Shield?
         </h2>
         <p className="text-muted-foreground text-lg">
-          A review would mean a lot to me, help others discover Focus Shield,
-          and be as locked in as you are right now!
+          A review would mean a lot to me! It helps others discover Focus
+          Shield and be as locked in as you are right now.
         </p>
       </div>
 
