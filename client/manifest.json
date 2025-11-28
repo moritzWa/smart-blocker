@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Focus Shield - AI Site & Distraction Blocker",
-  "version": "1.0.2",
-  "description": "AI-powered site & distraction blocker. Smart time-boxing, auto-reblock, dark mode. Minimal interface, maximum focus.",
+  "version": "1.0.3",
+  "description": "AI productivity site blocker. Type reason—get smart time-boxed access or stay blocked. Auto-reblock, strict mode. Minimal interface.",
   "permissions": ["storage", "tabs", "alarms"],
   "host_permissions": ["<all_urls>"],
   "background": {
