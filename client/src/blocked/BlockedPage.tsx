@@ -4,6 +4,7 @@ import ReasonForm from './components/ReasonForm';
 import TodoReminderForm from './components/TodoReminderForm';
 import AIResponseDisplay from './components/AIResponseDisplay';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 
 interface AIResponse {
   valid: boolean;
@@ -23,6 +24,9 @@ export default function BlockedPage() {
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
+
+  // Update favicon based on strict mode
+  useFaviconStrictMode(strictMode);
 
   useEffect(() => {
     // Get blocked URL from query params
