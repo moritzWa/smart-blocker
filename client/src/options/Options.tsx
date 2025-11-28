@@ -6,19 +6,9 @@ import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-interface UnblockedSite {
-  domain: string;
-  expiryTime: number;
-}
-
-interface TodoReminder {
-  id: string;
-  url: string;
-  hostname: string;
-  note?: string;
-  timestamp: number;
-}
+import type { UnblockedSite, TodoReminder } from './types';
+import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
+import { createSeedTodos } from './constants';
 
 export default function Options() {
   const [allowedSites, setAllowedSites] = useState('');
@@ -175,61 +165,13 @@ export default function Options() {
     const todoText = todoReminders
       .map((reminder) => {
         const note = reminder.note ? ` ${reminder.note}` : '';
-        return `- [ ]${note} (${reminder.url})`;
+        return `- [ ]${note} ([${reminder.url}](${reminder.url}))`;
       })
       .join('\n');
 
     await navigator.clipboard.writeText(todoText);
     setStatus('Copied to clipboard!');
     setTimeout(() => setStatus(''), 2000);
-  }
-
-  function formatTimeAgo(timestamp: number): string {
-    const minutes = Math.floor((Date.now() - timestamp) / 60000);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  }
-
-  function formatTimeRemaining(expiryTime: number): string {
-    const remaining = Math.max(0, expiryTime - Date.now());
-    const minutes = Math.ceil(remaining / 60000);
-    return `${minutes}m left`;
-  }
-
-  function parseSiteBlockFormat(text: string): {
-    allowedSites: string[];
-    blockedSites: string[];
-    strictMode: boolean;
-  } {
-    const lines = text
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l);
-    const allowedSites: string[] = [];
-    const blockedSites: string[] = [];
-    let strictMode = false;
-
-    // Check if first line is '*' (Strict Mode)
-    if (lines[0] === '*') {
-      strictMode = true;
-      lines.shift(); // Remove the '*' line
-    }
-
-    for (const line of lines) {
-      if (line.startsWith('+')) {
-        // Allowed site - strip the '+' prefix
-        const site = line.substring(1).trim();
-        if (site) allowedSites.push(site);
-      } else if (line !== '*') {
-        // Blocked site
-        blockedSites.push(line);
-      }
-    }
-
-    return { allowedSites, blockedSites, strictMode };
   }
 
   function handleImport(importText: string) {
@@ -259,36 +201,7 @@ export default function Options() {
   }
 
   async function handleSeedTodos() {
-    const exampleTodos: TodoReminder[] = [
-      {
-        id: `seed-${Date.now()}-1`,
-        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        hostname: 'youtube.com',
-        note: 'Check out that video Sarah recommended',
-        timestamp: Date.now() - 2700000, // 45 minutes ago
-      },
-      {
-        id: `seed-${Date.now()}-2`,
-        url: 'https://x.com/naval/status/1234567890',
-        hostname: 'x.com',
-        note: 'Read Twitter thread about productivity',
-        timestamp: Date.now() - 5400000, // 90 minutes ago
-      },
-      {
-        id: `seed-${Date.now()}-3`,
-        url: 'https://www.linkedin.com/feed/',
-        hostname: 'linkedin.com',
-        note: "Reply to Mike's message",
-        timestamp: Date.now() - 1800000, // 30 minutes ago
-      },
-      {
-        id: `seed-${Date.now()}-4`,
-        url: 'https://www.reddit.com/r/webdev/comments/example',
-        hostname: 'reddit.com',
-        note: 'Check that Next.js discussion',
-        timestamp: Date.now() - 7200000, // 2 hours ago
-      },
-    ];
+    const exampleTodos = createSeedTodos();
 
     // Get existing todos and append seed todos
     const result = await chrome.storage.sync.get({ todoReminders: [] });
@@ -298,7 +211,7 @@ export default function Options() {
     await chrome.storage.sync.set({ todoReminders: mergedTodos });
     loadTodoReminders();
 
-    setStatus('Seeded 3 example todos!');
+    setStatus('Seeded 4 example todos!');
     setTimeout(() => setStatus(''), 2000);
   }
 

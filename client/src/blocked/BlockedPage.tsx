@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { CheckCircle } from 'lucide-react';
 import ReasonForm from './components/ReasonForm';
 import TodoReminderForm from './components/TodoReminderForm';
 import AIResponseDisplay from './components/AIResponseDisplay';
@@ -20,6 +21,7 @@ export default function BlockedPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [strictMode, setStrictMode] = useState(false);
+  const [todoSaved, setTodoSaved] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -119,7 +121,9 @@ export default function BlockedPage() {
 
   const handleSaveTodoReminder = async () => {
     // Check if this is the first time creating a reminder
-    const result = await chrome.storage.sync.get({ hasCreatedFirstReminder: false });
+    const result = await chrome.storage.sync.get({
+      hasCreatedFirstReminder: false,
+    });
     const isFirstReminder = !result.hasCreatedFirstReminder;
 
     await chrome.runtime.sendMessage({
@@ -133,14 +137,25 @@ export default function BlockedPage() {
       await chrome.storage.sync.set({ hasCreatedFirstReminder: true });
 
       // Open options page with highlight parameter in URL
-      console.log('🎉 First reminder! Opening options page to show where reminders go');
-      const optionsUrl = chrome.runtime.getURL('src/options/options.html') + '?highlightTodos=true';
+      console.log(
+        '🎉 First reminder! Opening options page to show where reminders go'
+      );
+      const optionsUrl =
+        chrome.runtime.getURL('src/options/options.html') +
+        '?highlightTodos=true';
       chrome.tabs.create({ url: optionsUrl });
-    } else {
-      // Go back 2 steps to avoid redirect loop (skip blocked URL + blocked page)
-      console.log('🔙 Going back 2 steps in history after saving todo');
-      window.history.go(-2);
     }
+
+    // Show saved confirmation
+    setTodoSaved(true);
+
+    // Close tab after 2 seconds
+    setTimeout(async () => {
+      const tab = await chrome.tabs.getCurrent();
+      if (tab?.id) {
+        chrome.tabs.remove(tab.id);
+      }
+    }, 1300);
   };
 
   const handleReset = () => {
@@ -175,10 +190,21 @@ export default function BlockedPage() {
         </h1>
 
         <p className="text-2xl text-foreground mb-10">
-          Blocked: <span className="text-muted-foreground line-clamp-2 block">{displayUrl}</span>
+          Blocked:{' '}
+          <span className="text-muted-foreground line-clamp-2 block">
+            {displayUrl}
+          </span>
         </p>
 
-        {loading && !aiResponse ? (
+        {todoSaved ? (
+          // Success confirmation
+          <div className="mb-8 p-6 bg-emerald-100 dark:bg-emerald-950 rounded-lg text-center">
+            <CheckCircle className="w-16 h-16 mx-auto mb-3 text-emerald-600 dark:text-emerald-400" />
+            <h2 className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
+              Reminder Saved!
+            </h2>
+          </div>
+        ) : loading && !aiResponse ? (
           // Loading skeleton
           <>
             <div className="mb-8 p-6 bg-muted rounded-lg">
