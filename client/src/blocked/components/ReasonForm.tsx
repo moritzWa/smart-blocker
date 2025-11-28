@@ -44,8 +44,11 @@ export default function ReasonForm({
     <>
       {/* Option 1: AI Validation */}
       <div className="mb-4">
-        <label className="block mb-4 text-foreground font-medium text-lg">
-          Why do you want to access this? Don't lie to yourself.
+        <label className="block mb-4 font-medium text-lg">
+          <span className="text-foreground">Why</span>
+          <span className="text-muted-foreground"> do you want to access this? </span>
+          <span className="text-foreground">Don't lie</span>
+          <span className="text-muted-foreground"> to yourself.</span>
         </label>
         <Input
           ref={inputRef}

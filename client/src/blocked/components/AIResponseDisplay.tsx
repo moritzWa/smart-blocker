@@ -46,7 +46,7 @@ export default function AIResponseDisplay({
   return (
     <>
       {/* AI Response Display */}
-      <div className="mb-8 p-6 bg-muted rounded-lg text-left w-[424px] mx-auto">
+      <div className="mb-8 p-6 bg-muted rounded-lg text-left">
         <div className="flex items-start gap-3 mb-4">
           <div className="text-3xl">{aiResponse.valid ? '✅' : '❌'}</div>
           <div className="flex-1">
@@ -66,23 +66,23 @@ export default function AIResponseDisplay({
         </div>
       </div>
 
-      <div className="flex gap-4 justify-center">
+      <div className="flex gap-3">
         {aiResponse.valid ? (
           <>
-            <Button onClick={onReset} variant="secondary" size="lg">
+            <Button onClick={onReset} variant="secondary" size="lg" className="flex-1">
               Try different reason
             </Button>
-            <Button onClick={onConfirmUnblock} variant="default" size="lg">
+            <Button onClick={onConfirmUnblock} variant="default" size="lg" className="flex-1">
               Unblock for {formatTime(aiResponse.seconds)}
               <CornerDownLeft size={18} className="opacity-60" />
             </Button>
           </>
         ) : (
           <>
-            <Button onClick={onGoBack} variant="secondary" size="lg">
+            <Button onClick={onGoBack} variant="secondary" size="lg" className="flex-1">
               Go Back
             </Button>
-            <Button onClick={onAddToTodo} variant="default" size="lg">
+            <Button onClick={onAddToTodo} variant="default" size="lg" className="flex-1">
               Create Reminder
             </Button>
           </>

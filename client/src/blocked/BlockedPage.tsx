@@ -175,7 +175,7 @@ export default function BlockedPage() {
         </h1>
 
         <p className="text-2xl text-foreground mb-10">
-          Blocked: <span className="text-muted-foreground">{displayUrl}</span>
+          Blocked: <span className="text-muted-foreground line-clamp-2 block">{displayUrl}</span>
         </p>
 
         {loading && !aiResponse ? (
@@ -191,9 +191,9 @@ export default function BlockedPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-4 justify-center">
-              <Skeleton className="h-12 w-48" />
-              <Skeleton className="h-12 w-48" />
+            <div className="flex gap-3">
+              <Skeleton className="h-12 flex-1" />
+              <Skeleton className="h-12 flex-1" />
             </div>
           </>
         ) : !aiResponse ? (
