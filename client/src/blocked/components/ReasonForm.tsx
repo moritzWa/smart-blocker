@@ -1,13 +1,7 @@
-import { type RefObject, useEffect } from 'react';
-import { CornerDownLeft, ArrowLeft, ArrowRight } from 'lucide-react';
+import { type RefObject } from 'react';
+import { CornerDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 interface ReasonFormProps {
   reason: string;
@@ -30,22 +24,6 @@ export default function ReasonForm({
   onShowTodoInput,
   onGoBack,
 }: ReasonFormProps) {
-  // Keyboard shortcuts for navigation
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (loading) return;
-
-      if (e.key === 'ArrowLeft') {
-        onGoBack();
-      } else if (e.key === 'ArrowRight') {
-        onShowTodoInput();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [loading, onGoBack, onShowTodoInput]);
-
   return (
     <>
       {/* Option 1: AI Validation */}
@@ -81,42 +59,23 @@ export default function ReasonForm({
 
       {/* Separator and alternative options */}
       <div className="border-t-2 border-border pt-4">
-        <TooltipProvider>
-          <div className="flex gap-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onGoBack}
-                  disabled={loading}
-                  variant="secondary"
-                  className="flex-1"
-                >
-                  Go Back
-                  <ArrowLeft size={18} className="opacity-60" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Press ← (Left Arrow)</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onShowTodoInput}
-                  variant="default"
-                  className="flex-1"
-                >
-                  Remind Me Later
-                  <ArrowRight size={18} className="opacity-60" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Press → (Right Arrow)</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
+        <div className="flex gap-3">
+          <Button
+            onClick={onGoBack}
+            disabled={loading}
+            variant="secondary"
+            className="flex-1"
+          >
+            Go Back
+          </Button>
+          <Button
+            onClick={onShowTodoInput}
+            variant="default"
+            className="flex-1"
+          >
+            Remind Me Later
+          </Button>
+        </div>
       </div>
     </>
   );
