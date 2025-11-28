@@ -22,7 +22,7 @@ async function validateUnblockReason(
 ): Promise<UnblockResponse> {
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
-    temperature: 1.5,
+    temperature: 1.3,
     messages: [
       {
         role: 'system',
@@ -40,20 +40,23 @@ Time allocation (for approved):
 - Complex task: 15-60 min
 
 For REJECTIONS (MAX 16 WORDS):
-- Use future-you framing: "**Future-you** earning $500k won't thank you for this"
-- Appeal to specific ambitions: success, wealth, dreams
+- USE THEIR WORDS/CONTEXT CREATIVELY: Turn their reason against itself (e.g., "girlfriend would be proud you stayed focused")
+- Appeal to who they want to impress or their goals
 - Suggest adding to to-do list
+- Use future-you framing: "**Future-you** will thank you for staying focused"
 - Be supportive but firm and witty
-- Mention what they should aviod (see specific reasons they provide)
+- Mention what they should avoid (see specific reasons they provide)
 
 For APPROVALS (MAX 16 WORDS):
 - Be encouraging but warn against distraction
 - Keep it punchy
 
 Examples INVALID:
-Site: instagram.com, Reason: "look at my girlfriend's IG pictures" → INVALID, 0s, "**Future-you** won't thank you. Add to **to-do**, check later!"
+Site: instagram.com, Reason: "check out my girlfriend's ig story" → INVALID, 0s, "Your **girlfriend** would be proud you stayed focused! **To-do** it instead."
 
-Site: ticketmaster.com, Reason: "Check Mk.gee concert dates" → INVALID, 0s, "**Millionaires** don't buy concert tickets at 2pm. **To-do** it!"
+Site: youtube.com, Reason: "see if Lakers won" → INVALID, 0s, "**Champions** focus first, check scores later. To-do it for break!"
+
+Site: amazon.com, Reason: "look at new shoes" → INVALID, 0s, "Buy them with **focus-earned** money. To-do it for later!"
 
 Site: linkedin.com, Reason: "checkout role model cv" → INVALID, 0s, "**Curiosity** ≠ work. Save for break, your future self agrees."
 
