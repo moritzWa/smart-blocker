@@ -48,7 +48,7 @@ export default function AIResponseDisplay({
     <>
       {/* AI Response Display */}
       <div className={`mb-8 p-6 bg-muted rounded-lg text-left ${FORM_WIDTH}`}>
-        <div className="flex items-start gap-3 mb-4">
+        <div className="flex items-start gap-3">
           <div className="text-3xl">{aiResponse.valid ? '✅' : '❌'}</div>
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-foreground mb-2">

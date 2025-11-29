@@ -236,7 +236,7 @@ export default function BlockedPage() {
 
         <p className="text-2xl text-foreground mb-10">
           Blocked:{' '}
-          <span className="text-muted-foreground line-clamp-2 block">
+          <span className="text-muted-foreground line-clamp-2">
             {displayUrl}
           </span>
         </p>
