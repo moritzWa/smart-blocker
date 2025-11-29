@@ -59,7 +59,7 @@ export async function validateUnblockReason(
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'No error details');
-        console.error(`❌ Server error (${response.status}):`, errorText);
+        console.log(`❌ Server error (${response.status}):`, errorText);
         throw new Error(
           `Server returned ${response.status}: ${response.statusText}`
         );
@@ -71,19 +71,19 @@ export async function validateUnblockReason(
     } catch (error) {
       lastError = error as Error;
 
-      // Log detailed error info
+      // Log retry attempts as info (not errors) - won't show in Errors page
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          console.error(
+          console.log(
             `⏱️ Request timeout (attempt ${attempt}/${MAX_RETRIES})`
           );
         } else if (error.message.includes('Failed to fetch')) {
-          console.error(
+          console.log(
             `🌐 Network error - likely serverless cold start (attempt ${attempt}/${MAX_RETRIES}):`,
             error.message
           );
         } else {
-          console.error(
+          console.log(
             `❌ Validation error (attempt ${attempt}/${MAX_RETRIES}):`,
             error.message
           );
