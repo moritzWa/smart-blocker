@@ -2,6 +2,12 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FORM_WIDTH } from '../constants';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface TodoReminderFormProps {
   todoNote: string;
@@ -45,9 +51,18 @@ export default function TodoReminderForm({
         <Button onClick={onCancel} variant="secondary" className="flex-1">
           Cancel
         </Button>
-        <Button onClick={onSave} variant="default" className="flex-1">
-          Save Todo Reminder
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button onClick={onSave} variant="default" className="flex-1">
+                Save Todo Reminder
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Press Enter to save</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );

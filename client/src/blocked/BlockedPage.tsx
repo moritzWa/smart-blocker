@@ -101,6 +101,22 @@ export default function BlockedPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [aiResponse?.valid, blockedUrl]);
 
+  // Handle Cmd+S to trigger "Remind Me Later"
+  useEffect(() => {
+    // Only work when showing reason form (not todo input, not AI response, not loading)
+    if (showTodoInput || aiResponse || loading) return;
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault(); // Prevent browser's Save dialog
+        setShowTodoInput(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showTodoInput, aiResponse, loading]);
+
   const handleSubmitReason = async () => {
     if (!reason.trim()) return;
 

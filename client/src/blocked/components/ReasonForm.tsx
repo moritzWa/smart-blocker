@@ -2,6 +2,12 @@ import { type RefObject } from 'react';
 import { CornerDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface ReasonFormProps {
   reason: string;
@@ -51,15 +57,24 @@ export default function ReasonForm({
 
       {error && <p className="text-destructive mb-4">{error}</p>}
 
-      <Button
-        onClick={onSubmit}
-        disabled={!reason.trim() || loading}
-        variant="default"
-        className="w-full mb-4"
-      >
-        Submit
-        <CornerDownLeft size={18} className="opacity-60" />
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={onSubmit}
+              disabled={!reason.trim() || loading}
+              variant="default"
+              className="w-full mb-4"
+            >
+              Submit
+              <CornerDownLeft size={18} className="opacity-60" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Press Enter to submit</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Separator and alternative options */}
       <div className="border-t-2 border-border pt-4">
@@ -72,13 +87,22 @@ export default function ReasonForm({
           >
             Go Back
           </Button>
-          <Button
-            onClick={onShowTodoInput}
-            variant="default"
-            className="flex-1"
-          >
-            Remind Me Later
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onShowTodoInput}
+                  variant="default"
+                  className="flex-1"
+                >
+                  Remind Me Later
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Press ⌘S to remind later</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </>
