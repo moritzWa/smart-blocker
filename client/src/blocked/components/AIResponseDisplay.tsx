@@ -76,7 +76,7 @@ export default function AIResponseDisplay({
               size="lg"
               className="flex-1"
             >
-              Try different reason
+              Try again
             </Button>
             <Button
               onClick={onConfirmUnblock}
@@ -84,7 +84,7 @@ export default function AIResponseDisplay({
               size="lg"
               className="flex-1"
             >
-              Unblock for {formatTime(aiResponse.seconds)}
+              Unblock {formatTime(aiResponse.seconds)}
               <CornerDownLeft size={18} className="opacity-60" />
             </Button>
           </>
