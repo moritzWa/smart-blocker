@@ -231,12 +231,14 @@ export default function BlockedPage() {
         />
 
         <h1 className="text-5xl font-bold text-foreground mb-4">
-          {strictMode ? 'Focus Shield - Strict Mode' : 'Focus Shield'}
+          {strictMode ? 'Strict Mode' : 'Focus Shield'}
         </h1>
 
-        <p className="text-2xl text-foreground mb-10">
-          Blocked:{' '}
-          <span className="text-muted-foreground line-clamp-2">
+        <p
+          className={`text-2xl mb-5 text-foreground ${FORM_WIDTH} flex justify-center gap-1 text-center`}
+        >
+          <span>Blocked:</span>
+          <span className="text-muted-foreground truncate min-w-0">
             {displayUrl}
           </span>
         </p>
