@@ -10,7 +10,8 @@ export default defineConfig({
       manifest: './manifest.json',
       additionalInputs: [
         'src/options/options.html',
-        'src/blocked/blocked.html'
+        'src/blocked/blocked.html',
+        'src/onboarding/onboarding.html'
       ],
     }),
   ],

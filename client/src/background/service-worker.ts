@@ -122,6 +122,10 @@ async function updateExtensionIcon() {
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     await initializeDefaultSites();
+
+    // Open onboarding page on first install
+    const onboardingUrl = chrome.runtime.getURL('src/onboarding/onboarding.html');
+    chrome.tabs.create({ url: onboardingUrl });
   }
 
   // Set uninstall URL to collect feedback

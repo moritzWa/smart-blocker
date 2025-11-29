@@ -13,7 +13,9 @@ import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 
 // Type guards for safe storage access
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === 'string')
+  );
 }
 
 function isTemporaryUnblocks(value: unknown): value is Record<string, number> {
@@ -373,18 +375,31 @@ export default function Options() {
               variant="link"
               size="sm"
               className="cursor-pointer text-muted-foreground"
+              onClick={() => {
+                const onboardingUrl = chrome.runtime.getURL(
+                  'src/onboarding/onboarding.html'
+                );
+                chrome.tabs.create({ url: onboardingUrl });
+              }}
+            >
+              View Onboarding
+            </Button>
+            <Button
+              variant="link"
+              size="sm"
+              className="cursor-pointer text-muted-foreground"
               onClick={() => setShowImport(!showImport)}
             >
               Import from SiteBlock
             </Button>
-            <Button
+            {/* <Button
               variant="link"
               size="sm"
               className="cursor-pointer text-muted-foreground"
               onClick={handleSeedTodos}
             >
               Seed ToDos
-            </Button>
+            </Button> */}
             <Button
               variant="link"
               size="sm"
