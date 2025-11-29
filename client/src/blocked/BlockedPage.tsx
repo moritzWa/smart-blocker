@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 import { useReviewRequest } from './hooks/useReviewRequest';
 import { shouldShowReview, formatTime } from './utils';
+import { FORM_WIDTH } from './constants';
 
 interface AIResponse {
   valid: boolean;
@@ -258,7 +259,7 @@ export default function BlockedPage() {
           </div>
         ) : loading && !aiResponse ? (
           // Loading skeleton
-          <>
+          <div className={FORM_WIDTH}>
             <div className="mb-8 p-6 bg-muted rounded-lg text-left">
               <div className="flex items-start gap-3">
                 <Skeleton className="w-8 h-8 rounded-full" />
@@ -273,7 +274,7 @@ export default function BlockedPage() {
               <Skeleton className="h-12 flex-1" />
               <Skeleton className="h-12 flex-1" />
             </div>
-          </>
+          </div>
         ) : !aiResponse ? (
           <>
             {!showTodoInput ? (
@@ -298,7 +299,7 @@ export default function BlockedPage() {
           </>
         ) : (
           <AIResponseDisplay
-            aiResponse={aiResponse}
+            aiResponse={aiResponse as AIResponse}
             reason={reason}
             formatTime={formatTime}
             onConfirmUnblock={handleConfirmUnblock}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FORM_WIDTH } from '../constants';
 
 interface TodoReminderFormProps {
   todoNote: string;
@@ -28,7 +29,7 @@ export default function TodoReminderForm({
   }, [onSave]);
 
   return (
-    <div>
+    <div className={FORM_WIDTH}>
       <label className="block mb-4 text-muted-foreground font-medium text-lg">
         Optional note:
       </label>
