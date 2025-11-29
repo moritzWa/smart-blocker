@@ -63,7 +63,7 @@ export default function ReasonForm({
 
       {/* Separator and alternative options */}
       <div className="border-t-2 border-border pt-4">
-        <div className="flex gap-3">
+        <div className="flex gap-3 w-full">
           <Button
             onClick={onGoBack}
             disabled={loading}

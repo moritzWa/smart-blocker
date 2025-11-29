@@ -40,7 +40,7 @@ export default function TodoReminderForm({
         placeholder="Context for your reminder"
         className="mb-4"
       />
-      <div className="flex gap-3">
+      <div className="flex gap-3 w-full">
         <Button onClick={onCancel} variant="secondary" className="flex-1">
           Cancel
         </Button>

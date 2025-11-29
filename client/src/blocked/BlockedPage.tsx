@@ -6,22 +6,13 @@ import AIResponseDisplay from './components/AIResponseDisplay';
 import ReviewRequestCard from './components/ReviewRequestCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
+import { useReviewRequest } from './hooks/useReviewRequest';
+import { shouldShowReview, formatTime } from './utils';
 
 interface AIResponse {
   valid: boolean;
   seconds: number;
   message: string;
-}
-
-// Helper to check if count is power of 2
-function isPowerOfTwo(n: number): boolean {
-  return n > 0 && (n & (n - 1)) === 0;
-}
-
-// Check if review should be shown based on count and threshold
-function shouldShowReview(count: number, baseThreshold: number): boolean {
-  if (count < baseThreshold) return false;
-  return isPowerOfTwo(count);
 }
 
 export default function BlockedPage() {
@@ -35,9 +26,18 @@ export default function BlockedPage() {
   const [error, setError] = useState<string | null>(null);
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
-  const [showReviewRequest, setShowReviewRequest] = useState(false);
-  const [reviewDismissCount, setReviewDismissCount] = useState(0);
   const reasonInputRef = useRef<HTMLInputElement>(null);
+
+  // Review request logic
+  const {
+    showReviewRequest,
+    setShowReviewRequest,
+    reviewDismissCount,
+    setReviewDismissCount,
+    handleReviewClick,
+    handleReviewMaybeLater,
+    handleReviewDontAskAgain,
+  } = useReviewRequest({ todoSaved });
 
   // Update favicon based on strict mode
   useFaviconStrictMode(strictMode);
@@ -84,9 +84,6 @@ export default function BlockedPage() {
         }
       }
     );
-
-    // Auto-focus reason input
-    setTimeout(() => reasonInputRef.current?.focus(), 100);
   }, []);
 
   // Handle Enter key to unblock when request is approved
@@ -144,19 +141,6 @@ export default function BlockedPage() {
     if (response.success) {
       window.location.href = blockedUrl;
     }
-  };
-
-  // Helper to format seconds into human-readable time
-  const formatTime = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds} sec`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (remainingSeconds === 0) {
-      return `${minutes} min`;
-    }
-    return `${minutes}m ${remainingSeconds}s`;
   };
 
   const handleSaveTodoReminder = async () => {
@@ -223,7 +207,6 @@ export default function BlockedPage() {
     setAiResponse(null);
     setReason('');
     setError(null);
-    setTimeout(() => reasonInputRef.current?.focus(), 0);
   };
 
   const handleGoBack = () => {
@@ -235,58 +218,6 @@ export default function BlockedPage() {
     setTodoNote(reason); // Auto-fill with original reason
     setShowTodoInput(true);
     setAiResponse(null); // Hide AI response
-  };
-
-  const handleReviewClick = () => {
-    // Open review URL
-    window.open(
-      'https://chromewebstore.google.com/detail/focus-shield-ai-site-dist/ibmmihgadnkilmknmfmohlclogcifboj/reviews',
-      '_blank'
-    );
-    setShowReviewRequest(false);
-
-    // If we were showing review after saving todo, now close the tab
-    if (todoSaved) {
-      setTimeout(async () => {
-        const tab = await chrome.tabs.getCurrent();
-        if (tab?.id) {
-          chrome.tabs.remove(tab.id);
-        }
-      }, 300);
-    }
-  };
-
-  const handleReviewMaybeLater = async () => {
-    // Increment dismiss count
-    const newDismissCount = reviewDismissCount + 1;
-    await chrome.storage.sync.set({ reviewDismissCount: newDismissCount });
-    setShowReviewRequest(false);
-
-    // If we were showing review after saving todo, now close the tab
-    if (todoSaved) {
-      setTimeout(async () => {
-        const tab = await chrome.tabs.getCurrent();
-        if (tab?.id) {
-          chrome.tabs.remove(tab.id);
-        }
-      }, 1300);
-    }
-  };
-
-  const handleReviewDontAskAgain = async () => {
-    // Permanently dismiss
-    await chrome.storage.sync.set({ reviewDismissedPermanently: true });
-    setShowReviewRequest(false);
-
-    // If we were showing review after saving todo, now close the tab
-    if (todoSaved) {
-      setTimeout(async () => {
-        const tab = await chrome.tabs.getCurrent();
-        if (tab?.id) {
-          chrome.tabs.remove(tab.id);
-        }
-      }, 1300);
-    }
   };
 
   return (
@@ -338,7 +269,7 @@ export default function BlockedPage() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 w-full">
               <Skeleton className="h-12 flex-1" />
               <Skeleton className="h-12 flex-1" />
             </div>

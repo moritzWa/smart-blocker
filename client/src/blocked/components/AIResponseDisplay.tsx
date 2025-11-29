@@ -66,7 +66,7 @@ export default function AIResponseDisplay({
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 w-full">
         {aiResponse.valid ? (
           <>
             <Button onClick={onReset} variant="secondary" size="lg" className="flex-1">
