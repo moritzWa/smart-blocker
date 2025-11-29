@@ -11,6 +11,35 @@ import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
 import { createSeedTodos } from './constants';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 
+// Type guards for safe storage access
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isTemporaryUnblocks(value: unknown): value is Record<string, number> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Object.entries(value).every(([_, v]) => typeof v === 'number')
+  );
+}
+
+function isTodoReminderArray(value: unknown): value is TodoReminder[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof item.id === 'string' &&
+        typeof item.url === 'string' &&
+        typeof item.hostname === 'string' &&
+        typeof item.timestamp === 'number' &&
+        (item.note === undefined || typeof item.note === 'string')
+    )
+  );
+}
+
 export default function Options() {
   const [allowedSites, setAllowedSites] = useState('');
   const [blockedSites, setBlockedSites] = useState('');
@@ -29,12 +58,23 @@ export default function Options() {
     loadUnblockedSites();
     loadTodoReminders();
 
-    // Update both unblocked sites and todo reminders every 5 seconds
-    const interval = setInterval(() => {
-      loadUnblockedSites();
-      loadTodoReminders();
-    }, 5000);
-    return () => clearInterval(interval);
+    // Listen for storage changes and update immediately
+    const handleStorageChange = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      namespace: string
+    ) => {
+      if (namespace !== 'sync') return;
+
+      if (changes.temporaryUnblocks) {
+        loadUnblockedSites();
+      }
+      if (changes.todoReminders) {
+        loadTodoReminders();
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
   }, []);
 
   // Auto-save allowedSites after 1 second of no typing
@@ -83,18 +123,31 @@ export default function Options() {
       strictMode: false,
     });
 
-    setAllowedSites((result.allowedSites as string[]).join('\n'));
-    setBlockedSites((result.blockedSites as string[]).join('\n'));
-    setStrictMode(result.strictMode as boolean);
+    const allowedArray = isStringArray(result.allowedSites)
+      ? result.allowedSites
+      : [];
+    const blockedArray = isStringArray(result.blockedSites)
+      ? result.blockedSites
+      : [];
+    const strictModeValue =
+      typeof result.strictMode === 'boolean' ? result.strictMode : false;
+
+    setAllowedSites(allowedArray.join('\n'));
+    setBlockedSites(blockedArray.join('\n'));
+    setStrictMode(strictModeValue);
   }
 
   async function loadUnblockedSites() {
     const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
-    const temporaryUnblocks = result.temporaryUnblocks as Record<
-      string,
-      number
-    >;
 
+    // Validate type before using
+    if (!isTemporaryUnblocks(result.temporaryUnblocks)) {
+      console.warn('Invalid temporaryUnblocks format, using empty object');
+      setUnblockedSites([]);
+      return;
+    }
+
+    const temporaryUnblocks = result.temporaryUnblocks;
     const sites: UnblockedSite[] = [];
     const now = Date.now();
 
@@ -111,7 +164,15 @@ export default function Options() {
 
   async function loadTodoReminders() {
     const result = await chrome.storage.sync.get({ todoReminders: [] });
-    setTodoReminders(result.todoReminders as TodoReminder[]);
+
+    // Validate type before using
+    if (!isTodoReminderArray(result.todoReminders)) {
+      console.warn('Invalid todoReminders format, using empty array');
+      setTodoReminders([]);
+      return;
+    }
+
+    setTodoReminders(result.todoReminders);
   }
 
   async function saveSettings() {
