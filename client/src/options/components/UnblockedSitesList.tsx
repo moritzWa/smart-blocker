@@ -28,11 +28,9 @@ export default function UnblockedSitesList({
         {unblockedSites.map(({ domain, expiryTime }) => (
           <div
             key={domain}
-            className="flex justify-between items-center bg-background px-3 py-2 rounded border border-border"
+            className="flex justify-between items-center bg-background px-3 py-2 rounded-sm border border-border"
           >
-            <span className="font-mono text-sm text-foreground">
-              {domain}
-            </span>
+            <span className="font-mono text-sm text-foreground">{domain}</span>
             <span className="text-sm text-primary font-medium">
               {formatTimeRemaining(expiryTime)}
             </span>
