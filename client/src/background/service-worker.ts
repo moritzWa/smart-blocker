@@ -264,7 +264,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'VALIDATE_REASON') {
-    validateUnblockReason(message.hostname, message.reason).then(sendResponse);
+    validateUnblockReason(message.hostname, message.reason, message.conversationHistory || []).then(sendResponse);
     return true;
   }
 

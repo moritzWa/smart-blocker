@@ -43,7 +43,8 @@ Server runs on `http://localhost:8000`
 
 ### Development
 
-**Client:**
+**Client:**%
+
 ```bash
 cd client
 npm run dev    # Watch mode
@@ -51,6 +52,7 @@ npm run build  # Production build
 ```
 
 **Server:**
+
 ```bash
 cd server
 deno run --allow-net --allow-read --allow-env main.ts

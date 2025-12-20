@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { FORM_WIDTH } from '../constants';
 
 interface AIResponse {
-  valid: boolean;
+  valid: boolean | null;
   seconds: number;
   message: string;
+  followUpQuestion?: string | null;
 }
 
 interface AIResponseDisplayProps {

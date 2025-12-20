@@ -11,9 +11,15 @@ import { shouldShowReview, formatTime } from './utils';
 import { FORM_WIDTH } from './constants';
 
 interface AIResponse {
-  valid: boolean;
+  valid: boolean | null;
   seconds: number;
   message: string;
+  followUpQuestion?: string | null;
+}
+
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export default function BlockedPage() {
@@ -25,6 +31,8 @@ export default function BlockedPage() {
   const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [followUpAnswer, setFollowUpAnswer] = useState('');
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
@@ -117,8 +125,9 @@ export default function BlockedPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [showTodoInput, aiResponse, loading]);
 
-  const handleSubmitReason = async () => {
-    if (!reason.trim()) return;
+  const handleSubmitReason = async (messageToSend?: string) => {
+    const textToSend = messageToSend ?? reason;
+    if (!textToSend.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -127,13 +136,24 @@ export default function BlockedPage() {
       const response = await chrome.runtime.sendMessage({
         type: 'VALIDATE_REASON',
         hostname: displayUrl,
-        reason,
+        reason: textToSend,
+        conversationHistory,
       });
 
       if ('error' in response) {
         setError(response.error);
       } else {
+        // Update conversation history
+        const newHistory: ConversationMessage[] = [
+          ...conversationHistory,
+          { role: 'user', content: textToSend },
+        ];
+        if (response.followUpQuestion) {
+          newHistory.push({ role: 'assistant', content: response.followUpQuestion });
+        }
+        setConversationHistory(newHistory);
         setAiResponse(response);
+        setFollowUpAnswer('');
       }
     } catch (err) {
       setError('Failed to connect to validation service');
@@ -141,6 +161,11 @@ export default function BlockedPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmitFollowUp = () => {
+    if (!followUpAnswer.trim()) return;
+    handleSubmitReason(followUpAnswer);
   };
 
   const handleConfirmUnblock = async () => {
@@ -224,6 +249,8 @@ export default function BlockedPage() {
     setAiResponse(null);
     setReason('');
     setError(null);
+    setConversationHistory([]);
+    setFollowUpAnswer('');
   };
 
   const handleGoBack = () => {
@@ -315,6 +342,51 @@ export default function BlockedPage() {
               />
             )}
           </>
+        ) : aiResponse.valid === null && aiResponse.followUpQuestion ? (
+          // Follow-up question
+          <div className={FORM_WIDTH}>
+            <div className="mb-6 p-5 bg-muted rounded-lg text-left">
+              <div className="flex items-start gap-3">
+                <div className="text-2xl">🤔</div>
+                <div className="flex-1">
+                  <p className="text-foreground text-lg">{aiResponse.followUpQuestion}</p>
+                </div>
+              </div>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmitFollowUp();
+              }}
+              className="w-full"
+            >
+              <input
+                type="text"
+                value={followUpAnswer}
+                onChange={(e) => setFollowUpAnswer(e.target.value)}
+                placeholder="Your answer..."
+                className="w-full p-4 text-lg border rounded-lg mb-4 bg-background text-foreground"
+                autoFocus
+                disabled={loading}
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex-1 p-3 text-lg bg-secondary text-secondary-foreground rounded-lg"
+                >
+                  Start Over
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !followUpAnswer.trim()}
+                  className="flex-1 p-3 text-lg bg-primary text-primary-foreground rounded-lg disabled:opacity-50"
+                >
+                  {loading ? 'Checking...' : 'Submit'}
+                </button>
+              </div>
+            </form>
+          </div>
         ) : (
           <AIResponseDisplay
             aiResponse={aiResponse as AIResponse}

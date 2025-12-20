@@ -1,11 +1,18 @@
 export interface AIResponse {
-  valid: boolean;
+  valid: boolean | null; // null = follow-up needed
   seconds: number;
   message: string;
+  followUpQuestion?: string | null;
 }
 
-const VALIDATION_SERVICE_URL =
-  'https://smart-blocker.moritzwa.deno.net/validate';
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// const VALIDATION_SERVICE_URL =
+// 'https://smart-blocker.moritzwa.deno.net/validate';
+const VALIDATION_SERVICE_URL = 'http://localhost:8000/validate';
 const REQUEST_TIMEOUT = 10000; // 10 seconds
 const MAX_RETRIES = 5; // Increased for serverless cold starts
 
@@ -32,7 +39,8 @@ async function fetchWithTimeout(
 
 export async function validateUnblockReason(
   hostname: string,
-  reason: string
+  reason: string,
+  conversationHistory: ConversationMessage[] = []
 ): Promise<AIResponse | { error: string }> {
   let lastError: Error | null = null;
 
@@ -48,7 +56,7 @@ export async function validateUnblockReason(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hostname, reason }),
+          body: JSON.stringify({ hostname, reason, conversationHistory }),
         },
         REQUEST_TIMEOUT
       );
@@ -74,9 +82,7 @@ export async function validateUnblockReason(
       // Log retry attempts as info (not errors) - won't show in Errors page
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          console.log(
-            `⏱️ Request timeout (attempt ${attempt}/${MAX_RETRIES})`
-          );
+          console.log(`⏱️ Request timeout (attempt ${attempt}/${MAX_RETRIES})`);
         } else if (error.message.includes('Failed to fetch')) {
           console.log(
             `🌐 Network error - likely serverless cold start (attempt ${attempt}/${MAX_RETRIES}):`,

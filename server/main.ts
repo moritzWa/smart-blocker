@@ -1,87 +1,92 @@
 import '@std/dotenv/load';
 import { z } from 'zod';
-import { zodResponseFormat } from 'openai/helpers/zod';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: Deno.env.get('OPENAI_API_KEY'),
+const groq = new OpenAI({
+  apiKey: Deno.env.get('GROQ_API_KEY'),
+  baseURL: 'https://api.groq.com/openai/v1',
 });
 
 // Zod schema for structured output
 const UnblockResponseSchema = z.object({
-  seconds: z.number().int().min(10).max(3600), // 10 seconds to 60 minutes
-  valid: z.boolean(),
+  seconds: z.number().int().min(0).max(3600), // 0 for reject/follow-up, up to 60 minutes
+  valid: z.boolean().nullable(), // null = need follow-up
   message: z.string(),
+  followUpQuestion: z.string().nullable().optional(), // question to ask user if valid is null
 });
 
 type UnblockResponse = z.infer<typeof UnblockResponseSchema>;
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 async function validateUnblockReason(
   reason: string,
-  hostname: string
+  hostname: string,
+  conversationHistory: Message[] = []
 ): Promise<UnblockResponse> {
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    temperature: 1.3,
-    messages: [
-      {
-        role: 'system',
-        content: `You are a witty accountability partner for a website blocker. Evaluate if the user's reason is for WORK/URGENT needs, then respond with a punchy message (MAX 16 WORDS).
+  const userMessages: Array<{
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+  }> = [
+    {
+      role: 'system',
+      content: `You are a witty accountability partner for a website blocker.
 
-Use **bold** for key words (max 4 words bolded per message).
+ACTIONS:
+1. APPROVE (valid=true): Clear work/learning purpose
+2. REJECT (valid=false): Entertainment, personal browsing
+3. FOLLOW-UP (valid=null): Vague or suspicious reasons - ask ONE short question
 
-APPROVE if: Work/school requirement, urgent communication, or critical immediate need.
-REJECT if: Personal browsing, entertainment, shopping, or anything that can wait.
+ASK FOLLOW-UP WHEN:
+- Vague: "message friend", "check something", "browse"
+- Site mismatch: YouTube for "message someone" (YouTube isn't messaging)
+- Suspicious excuse that could be a lie
 
-Time allocation (for approved):
-- Quick lookup: 20-60s
-- Messages: 2-5 min
-- Tutorial/research: 5-15 min
-- Complex task: 15-60 min
+APPROVE WITHOUT FOLLOW-UP:
+- Clear learning: "react tutorial", "debug error", "watch lecture"
+- Specific work: "check PR comments", "reply to client"
 
-For REJECTIONS (MAX 16 WORDS):
-- USE THEIR WORDS/CONTEXT CREATIVELY: Turn their reason against itself (e.g., "girlfriend would be proud you stayed focused")
-- Appeal to who they want to impress or their goals
-- Suggest adding to to-do list
-- Use future-you framing: "**Future-you** will thank you for staying focused"
-- Be supportive but firm and witty
-- Mention what they should avoid (see specific reasons they provide)
+Time: Quick=30-60s, Messages=2-5min, Tutorial=10-15min, Complex=30-60min
 
-For APPROVALS (MAX 16 WORDS):
-- Be encouraging but warn against distraction
-- Keep it punchy
+Keep messages SHORT (max 16 words). Use **bold** for 1-2 key words.
 
-Examples INVALID:
-Site: instagram.com, Reason: "check out my girlfriend's ig story" → INVALID, 0s, "Your **girlfriend** would be proud you stayed focused! **To-do** it instead."
+Examples:
+Site: youtube.com, Reason: "react tutorial" → valid=true, seconds=900, message="**15 min**. Stay focused on the tutorial!"
+Site: instagram.com, Reason: "message friend" → valid=null, followUpQuestion="What do you need to message them about?"
+Site: youtube.com, Reason: "bored" → valid=false, message="Boredom isn't urgent. **Future-you** will thank you!"
 
-Site: youtube.com, Reason: "see if Lakers won" → INVALID, 0s, "**Champions** focus first, check scores later. To-do it for break!"
+JSON format: {seconds, valid, message, followUpQuestion}`,
+    },
+  ];
 
-Site: amazon.com, Reason: "look at new shoes" → INVALID, 0s, "Buy them with **focus-earned** money. To-do it for later!"
+  // Add conversation history
+  for (const msg of conversationHistory) {
+    userMessages.push({ role: msg.role, content: msg.content });
+  }
 
-Site: linkedin.com, Reason: "checkout role model cv" → INVALID, 0s, "**Curiosity** ≠ work. Save for break, your future self agrees."
+  // Add current message
+  userMessages.push({
+    role: 'user',
+    content: `Site: ${hostname}\nReason: ${reason}`,
+  });
 
-Examples VALID:
-Site: stackoverflow.com, Reason: "Debug React error" → VALID, 120s, "**2 minutes**. Get your answer, don't scroll discussions!"
-
-Site: x.com, Reason: "check John's profile - recruiting decision" → VALID, 60s, "Quick profile check. X is a **rabbit hole**, stay sharp!"`,
-      },
-      {
-        role: 'user',
-        content: `Site: ${hostname}\nReason: ${reason}`,
-      },
-    ],
-    response_format: zodResponseFormat(
-      UnblockResponseSchema,
-      'unblock_response'
-    ),
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    temperature: 0.7,
+    messages: userMessages,
+    response_format: { type: 'json_object' },
   });
 
   const response = completion.choices[0].message.content;
   if (!response) {
-    throw new Error('No response from OpenAI');
+    throw new Error('No response from Groq');
   }
 
-  return JSON.parse(response);
+  const parsed = JSON.parse(response);
+  return UnblockResponseSchema.parse(parsed);
 }
 
 Deno.serve({ port: 8000 }, async (req) => {
@@ -98,7 +103,7 @@ Deno.serve({ port: 8000 }, async (req) => {
 
   if (req.method === 'POST' && new URL(req.url).pathname === '/validate') {
     try {
-      const { reason, hostname } = await req.json();
+      const { reason, hostname, conversationHistory } = await req.json();
 
       if (!reason || !hostname) {
         return new Response(
@@ -113,7 +118,11 @@ Deno.serve({ port: 8000 }, async (req) => {
         );
       }
 
-      const result = await validateUnblockReason(reason, hostname);
+      const result = await validateUnblockReason(
+        reason,
+        hostname,
+        conversationHistory || []
+      );
 
       return new Response(JSON.stringify(result), {
         status: 200,
