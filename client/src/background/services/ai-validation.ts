@@ -10,6 +10,11 @@ export interface ConversationMessage {
   content: string;
 }
 
+export interface SiteMetadata {
+  title: string;
+  description: string;
+}
+
 // const VALIDATION_SERVICE_URL =
 // 'https://smart-blocker.moritzwa.deno.net/validate';
 const VALIDATION_SERVICE_URL = 'http://localhost:8000/validate';
@@ -40,7 +45,8 @@ async function fetchWithTimeout(
 export async function validateUnblockReason(
   hostname: string,
   reason: string,
-  conversationHistory: ConversationMessage[] = []
+  conversationHistory: ConversationMessage[] = [],
+  siteMetadata?: SiteMetadata | null
 ): Promise<AIResponse | { error: string }> {
   let lastError: Error | null = null;
 
@@ -56,7 +62,7 @@ export async function validateUnblockReason(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hostname, reason, conversationHistory }),
+          body: JSON.stringify({ hostname, reason, conversationHistory, siteMetadata }),
         },
         REQUEST_TIMEOUT
       );

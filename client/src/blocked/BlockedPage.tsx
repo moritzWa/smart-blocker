@@ -22,6 +22,11 @@ interface ConversationMessage {
   content: string;
 }
 
+interface SiteMetadata {
+  title: string;
+  description: string;
+}
+
 export default function BlockedPage() {
   const [blockedUrl, setBlockedUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState('');
@@ -33,6 +38,7 @@ export default function BlockedPage() {
   const [error, setError] = useState<string | null>(null);
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
+  const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +71,16 @@ export default function BlockedPage() {
       setDisplayUrl(hostname + pathname + urlObj.search);
     } catch {
       setDisplayUrl(url);
+    }
+
+    // Fetch site metadata in background
+    if (url) {
+      chrome.runtime.sendMessage({ type: 'GET_SITE_METADATA', url }).then((metadata) => {
+        if (metadata) {
+          setSiteMetadata(metadata);
+          console.log('📄 Got site metadata:', metadata);
+        }
+      });
     }
 
     // Load settings and increment blocked page view count
@@ -138,6 +154,7 @@ export default function BlockedPage() {
         hostname: displayUrl,
         reason: textToSend,
         conversationHistory,
+        siteMetadata,
       });
 
       if ('error' in response) {

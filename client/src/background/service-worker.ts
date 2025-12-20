@@ -4,6 +4,38 @@ import { unblockSite, addTodoReminder, removeTodoReminder } from './services/sto
 
 console.log('Focus Shield service worker loaded');
 
+// Fetch site metadata (title, description) from URL
+async function fetchSiteMetadata(url: string): Promise<{ title: string; description: string } | null> {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'text/html' },
+    });
+
+    if (!response.ok) return null;
+
+    const html = await response.text();
+
+    // Parse title
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+
+    // Parse meta description
+    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+                      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+    const description = descMatch ? descMatch[1].trim() : '';
+
+    console.log(`📄 Fetched metadata for ${url}:`, { title, description });
+    return { title, description };
+  } catch (error) {
+    console.log(`⚠️ Could not fetch metadata for ${url}:`, error);
+    return null;
+  }
+}
+
+// Store metadata for a blocked URL
+const siteMetadataCache = new Map<string, { title: string; description: string }>();
+
 // Badge update interval ID
 let badgeUpdateInterval: number | null = null;
 
@@ -205,6 +237,13 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
     const result = await checkIfBlocked(tab.url);
     if (result.blocked) {
+      // Fetch metadata in background (don't block the redirect)
+      fetchSiteMetadata(tab.url).then(metadata => {
+        if (metadata) {
+          siteMetadataCache.set(tab.url!, metadata);
+        }
+      });
+
       const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
         '?url=' + encodeURIComponent(tab.url);
       chrome.tabs.update(tabId, { url: blockPageUrl });
@@ -264,7 +303,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'VALIDATE_REASON') {
-    validateUnblockReason(message.hostname, message.reason, message.conversationHistory || []).then(sendResponse);
+    validateUnblockReason(message.hostname, message.reason, message.conversationHistory || [], message.siteMetadata).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'GET_SITE_METADATA') {
+    // Try cache first, then fetch
+    const cached = siteMetadataCache.get(message.url);
+    if (cached) {
+      sendResponse(cached);
+    } else {
+      fetchSiteMetadata(message.url).then(metadata => {
+        if (metadata) {
+          siteMetadataCache.set(message.url, metadata);
+        }
+        sendResponse(metadata);
+      });
+    }
     return true;
   }
 

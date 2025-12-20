@@ -22,10 +22,16 @@ interface Message {
   content: string;
 }
 
+interface SiteMetadata {
+  title: string;
+  description: string;
+}
+
 async function validateUnblockReason(
   reason: string,
   hostname: string,
-  conversationHistory: Message[] = []
+  conversationHistory: Message[] = [],
+  siteMetadata?: SiteMetadata | null
 ): Promise<UnblockResponse> {
   const userMessages: Array<{
     role: 'system' | 'user' | 'assistant';
@@ -44,6 +50,7 @@ ASK FOLLOW-UP WHEN:
 - Vague: "message friend", "check something", "browse"
 - Site mismatch: YouTube for "message someone" (YouTube isn't messaging)
 - Suspicious excuse that could be a lie
+- Page content doesn't match reason (check siteTitle/siteDescription if provided)
 
 APPROVE WITHOUT FOLLOW-UP:
 - Clear learning: "react tutorial", "debug error", "watch lecture"
@@ -67,10 +74,19 @@ JSON format: {seconds, valid, message, followUpQuestion}`,
     userMessages.push({ role: msg.role, content: msg.content });
   }
 
-  // Add current message
+  // Add current message with metadata if available
+  let userContent = `Site: ${hostname}\nReason: ${reason}`;
+  if (siteMetadata) {
+    console.log('siteMetadata', siteMetadata);
+
+    userContent += `\nPage Title: ${siteMetadata.title}`;
+    if (siteMetadata.description) {
+      userContent += `\nPage Description: ${siteMetadata.description}`;
+    }
+  }
   userMessages.push({
     role: 'user',
-    content: `Site: ${hostname}\nReason: ${reason}`,
+    content: userContent,
   });
 
   const completion = await groq.chat.completions.create({
@@ -103,7 +119,8 @@ Deno.serve({ port: 8000 }, async (req) => {
 
   if (req.method === 'POST' && new URL(req.url).pathname === '/validate') {
     try {
-      const { reason, hostname, conversationHistory } = await req.json();
+      const { reason, hostname, conversationHistory, siteMetadata } =
+        await req.json();
 
       if (!reason || !hostname) {
         return new Response(
@@ -121,7 +138,8 @@ Deno.serve({ port: 8000 }, async (req) => {
       const result = await validateUnblockReason(
         reason,
         hostname,
-        conversationHistory || []
+        conversationHistory || [],
+        siteMetadata
       );
 
       return new Response(JSON.stringify(result), {
