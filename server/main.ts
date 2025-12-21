@@ -27,11 +27,20 @@ interface SiteMetadata {
   description: string;
 }
 
+interface AccessAttempt {
+  domain: string;
+  reason: string;
+  timestamp: number;
+  outcome: 'approved' | 'rejected' | 'follow_up';
+  durationSeconds?: number;
+}
+
 async function validateUnblockReason(
   reason: string,
   hostname: string,
   conversationHistory: Message[] = [],
-  siteMetadata?: SiteMetadata | null
+  siteMetadata?: SiteMetadata | null,
+  accessHistory?: AccessAttempt[]
 ): Promise<UnblockResponse> {
   const userMessages: Array<{
     role: 'system' | 'user' | 'assistant';
@@ -42,19 +51,20 @@ async function validateUnblockReason(
       content: `You are a witty accountability partner for a website blocker.
 
 ACTIONS:
-1. APPROVE (valid=true): Clear work/learning purpose
-2. REJECT (valid=false): Entertainment, personal browsing
-3. FOLLOW-UP (valid=null): Vague or suspicious reasons - ask ONE short question
+1. APPROVE (valid=true): Practical/work purpose - even small tasks count
+2. REJECT (valid=false): Pure entertainment, mindless browsing, "just bored"
+3. FOLLOW-UP (valid=null): Need more specifics to decide
 
-ASK FOLLOW-UP WHEN:
-- Vague: "message friend", "check something", "browse"
-- Site mismatch: YouTube for "message someone" (YouTube isn't messaging)
-- Suspicious excuse that could be a lie
-- Page content doesn't match reason (check siteTitle/siteDescription if provided)
+JUDGMENT GUIDELINES:
+- "Urgent" is NOT required. Practical tasks like "request a document", "coordinate plans", "send a file" are valid
+- Ask follow-up to get specifics, not to interrogate
+- If user gives a concrete task (even small), approve it
+- Only reject clear entertainment/procrastination
 
-APPROVE WITHOUT FOLLOW-UP:
-- Clear learning: "react tutorial", "debug error", "watch lecture"
-- Specific work: "check PR comments", "reply to client"
+BE SKEPTICAL of:
+- Vague: "message friend", "check something", "tutorial" → ask what specifically
+- Site mismatch: reason doesn't fit the site
+- Repeated requests with same vague reason
 
 Time: Quick=30-60s, Messages=2-5min, Tutorial=10-15min, Complex=30-60min
 
@@ -74,15 +84,21 @@ JSON format: {seconds, valid, message, followUpQuestion}`,
     userMessages.push({ role: msg.role, content: msg.content });
   }
 
-  // Add current message with metadata if available
+  // Add current message with metadata and history if available
   let userContent = `Site: ${hostname}\nReason: ${reason}`;
   if (siteMetadata) {
-    console.log('siteMetadata', siteMetadata);
-
     userContent += `\nPage Title: ${siteMetadata.title}`;
     if (siteMetadata.description) {
       userContent += `\nPage Description: ${siteMetadata.description}`;
     }
+  }
+  if (accessHistory && accessHistory.length > 0) {
+    const historyStr = accessHistory.slice(0, 10).map(a => {
+      const timeAgo = Math.round((Date.now() - a.timestamp) / 60000);
+      const timeStr = timeAgo < 60 ? `${timeAgo}m ago` : `${Math.round(timeAgo / 60)}h ago`;
+      return `- ${timeStr}: "${a.reason}" → ${a.outcome}${a.durationSeconds ? ` (${a.durationSeconds}s)` : ''}`;
+    }).join('\n');
+    userContent += `\n\nRecent history for this site (last 24h):\n${historyStr}`;
   }
   userMessages.push({
     role: 'user',
@@ -119,7 +135,7 @@ Deno.serve({ port: 8000 }, async (req) => {
 
   if (req.method === 'POST' && new URL(req.url).pathname === '/validate') {
     try {
-      const { reason, hostname, conversationHistory, siteMetadata } =
+      const { reason, hostname, conversationHistory, siteMetadata, accessHistory } =
         await req.json();
 
       if (!reason || !hostname) {
@@ -139,7 +155,8 @@ Deno.serve({ port: 8000 }, async (req) => {
         reason,
         hostname,
         conversationHistory || [],
-        siteMetadata
+        siteMetadata,
+        accessHistory
       );
 
       return new Response(JSON.stringify(result), {

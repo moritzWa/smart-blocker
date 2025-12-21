@@ -6,7 +6,7 @@ import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { UnblockedSite, TodoReminder } from './types';
+import type { UnblockedSite, TodoReminder, AccessAttempt } from './types';
 import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
 import { createSeedTodos } from './constants';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
@@ -51,6 +51,8 @@ export default function Options() {
   const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
   const [showImport, setShowImport] = useState(false);
   const [highlightTodos, setHighlightTodos] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
 
   // Update favicon based on strict mode
   useFaviconStrictMode(strictMode);
@@ -59,19 +61,23 @@ export default function Options() {
     loadSettings();
     loadUnblockedSites();
     loadTodoReminders();
+    loadAccessHistory();
 
     // Listen for storage changes and update immediately
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       namespace: string
     ) => {
-      if (namespace !== 'sync') return;
-
-      if (changes.temporaryUnblocks) {
-        loadUnblockedSites();
+      if (namespace === 'sync') {
+        if (changes.temporaryUnblocks) {
+          loadUnblockedSites();
+        }
+        if (changes.todoReminders) {
+          loadTodoReminders();
+        }
       }
-      if (changes.todoReminders) {
-        loadTodoReminders();
+      if (namespace === 'local' && changes.accessHistory) {
+        loadAccessHistory();
       }
     };
 
@@ -286,6 +292,33 @@ export default function Options() {
     );
   }
 
+  async function loadAccessHistory() {
+    const result = await chrome.storage.local.get({ accessHistory: [] });
+    setAccessHistory(result.accessHistory as AccessAttempt[]);
+  }
+
+  function handleToggleHistory() {
+    if (!showHistory) {
+      loadAccessHistory();
+    }
+    setShowHistory(!showHistory);
+  }
+
+  function formatHistoryTime(timestamp: number): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (isToday) return `Today ${time}`;
+    if (isYesterday) return `Yesterday ${time}`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` ${time}`;
+  }
+
   return (
     <div className="min-h-screen bg-background py-10">
       <div className="max-w-3xl mx-auto rounded-lg p-8">
@@ -353,16 +386,44 @@ export default function Options() {
             onImport={handleImport}
           />
 
+          {showHistory && (
+            <Card className="p-4 rounded-xl">
+              <h3 className="text-lg font-semibold mb-3">Access History</h3>
+              {accessHistory.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No history yet</p>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {accessHistory.map((attempt) => (
+                    <div
+                      key={attempt.id}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 text-sm"
+                    >
+                      <span className="text-lg">
+                        {attempt.outcome === 'approved' ? '✅' : attempt.outcome === 'rejected' ? '❌' : '🤔'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{attempt.domain}</div>
+                        <div className="text-muted-foreground truncate">"{attempt.reason}"</div>
+                      </div>
+                      <div className="text-muted-foreground text-xs whitespace-nowrap">
+                        {formatHistoryTime(attempt.timestamp)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          )}
+
           <div className="flex gap-4 justify-between text-center">
-            {/* <Button variant="link" size="sm" asChild>
-              <a
-                href="https://github.com/moritzWa/smart-blocker"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Contribute on GitHub
-              </a>
-            </Button> */}
+            <Button
+              variant="link"
+              size="sm"
+              className="cursor-pointer text-muted-foreground"
+              onClick={handleToggleHistory}
+            >
+              {showHistory ? 'Hide History' : 'History'}
+            </Button>
             <Button
               variant="link"
               size="sm"

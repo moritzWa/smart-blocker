@@ -1,6 +1,6 @@
 import { checkIfBlocked, normalizeUrl } from './utils/blocking';
 import { validateUnblockReason } from './services/ai-validation';
-import { unblockSite, addTodoReminder, removeTodoReminder } from './services/storage';
+import { unblockSite, addTodoReminder, removeTodoReminder, saveAccessAttempt, getAccessHistory } from './services/storage';
 
 console.log('Focus Shield service worker loaded');
 
@@ -303,7 +303,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'VALIDATE_REASON') {
-    validateUnblockReason(message.hostname, message.reason, message.conversationHistory || [], message.siteMetadata).then(sendResponse);
+    validateUnblockReason(message.hostname, message.reason, message.conversationHistory || [], message.siteMetadata, message.accessHistory).then(sendResponse);
     return true;
   }
 
@@ -320,6 +320,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse(metadata);
       });
     }
+    return true;
+  }
+
+  if (message.type === 'SAVE_ACCESS_ATTEMPT') {
+    saveAccessAttempt(message.attempt).then(() => sendResponse({ success: true }));
+    return true;
+  }
+
+  if (message.type === 'GET_ACCESS_HISTORY') {
+    getAccessHistory(message.domain, message.hoursBack || 24).then(sendResponse);
     return true;
   }
 

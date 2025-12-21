@@ -15,6 +15,14 @@ export interface SiteMetadata {
   description: string;
 }
 
+export interface AccessAttempt {
+  domain: string;
+  reason: string;
+  timestamp: number;
+  outcome: 'approved' | 'rejected' | 'follow_up';
+  durationSeconds?: number;
+}
+
 // const VALIDATION_SERVICE_URL =
 // 'https://smart-blocker.moritzwa.deno.net/validate';
 const VALIDATION_SERVICE_URL = 'http://localhost:8000/validate';
@@ -46,7 +54,8 @@ export async function validateUnblockReason(
   hostname: string,
   reason: string,
   conversationHistory: ConversationMessage[] = [],
-  siteMetadata?: SiteMetadata | null
+  siteMetadata?: SiteMetadata | null,
+  accessHistory?: AccessAttempt[]
 ): Promise<AIResponse | { error: string }> {
   let lastError: Error | null = null;
 
@@ -62,7 +71,7 @@ export async function validateUnblockReason(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hostname, reason, conversationHistory, siteMetadata }),
+          body: JSON.stringify({ hostname, reason, conversationHistory, siteMetadata, accessHistory }),
         },
         REQUEST_TIMEOUT
       );

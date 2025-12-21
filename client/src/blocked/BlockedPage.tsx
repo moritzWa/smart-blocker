@@ -27,6 +27,27 @@ interface SiteMetadata {
   description: string;
 }
 
+interface AccessAttempt {
+  id: string;
+  domain: string;
+  reason: string;
+  timestamp: number;
+  outcome: 'approved' | 'rejected' | 'follow_up';
+  durationSeconds?: number;
+  aiMessage?: string;
+}
+
+// Simple markdown parser for **bold** text
+function parseBoldMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 export default function BlockedPage() {
   const [blockedUrl, setBlockedUrl] = useState('');
   const [displayUrl, setDisplayUrl] = useState('');
@@ -39,6 +60,7 @@ export default function BlockedPage() {
   const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
   const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
+  const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
   const reasonInputRef = useRef<HTMLInputElement>(null);
@@ -81,6 +103,19 @@ export default function BlockedPage() {
           console.log('📄 Got site metadata:', metadata);
         }
       });
+
+      // Fetch access history for this domain
+      try {
+        const domain = new URL(url).hostname.replace(/^www\./, '');
+        chrome.runtime.sendMessage({ type: 'GET_ACCESS_HISTORY', domain, hoursBack: 24 }).then((history) => {
+          if (history) {
+            setAccessHistory(history);
+            console.log('📊 Got access history:', history);
+          }
+        });
+      } catch {
+        // ignore URL parse errors
+      }
     }
 
     // Load settings and increment blocked page view count
@@ -148,6 +183,14 @@ export default function BlockedPage() {
     setLoading(true);
     setError(null);
 
+    // Get domain for history
+    let domain = '';
+    try {
+      domain = new URL(blockedUrl).hostname.replace(/^www\./, '');
+    } catch {
+      domain = displayUrl;
+    }
+
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'VALIDATE_REASON',
@@ -155,11 +198,26 @@ export default function BlockedPage() {
         reason: textToSend,
         conversationHistory,
         siteMetadata,
+        accessHistory,
       });
 
       if ('error' in response) {
         setError(response.error);
       } else {
+        // Save access attempt to history
+        const outcome = response.valid === true ? 'approved' : response.valid === false ? 'rejected' : 'follow_up';
+        chrome.runtime.sendMessage({
+          type: 'SAVE_ACCESS_ATTEMPT',
+          attempt: {
+            domain,
+            reason: textToSend,
+            timestamp: Date.now(),
+            outcome,
+            durationSeconds: response.valid ? response.seconds : undefined,
+            aiMessage: response.message || response.followUpQuestion,
+          },
+        });
+
         // Update conversation history
         const newHistory: ConversationMessage[] = [
           ...conversationHistory,
@@ -366,7 +424,7 @@ export default function BlockedPage() {
               <div className="flex items-start gap-3">
                 <div className="text-2xl">🤔</div>
                 <div className="flex-1">
-                  <p className="text-foreground text-lg">{aiResponse.followUpQuestion}</p>
+                  <p className="text-foreground text-lg">{parseBoldMarkdown(aiResponse.followUpQuestion)}</p>
                 </div>
               </div>
             </div>

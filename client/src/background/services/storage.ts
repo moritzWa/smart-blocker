@@ -6,6 +6,16 @@ export interface TodoReminder {
   timestamp: number;
 }
 
+export interface AccessAttempt {
+  id: string;
+  domain: string;
+  reason: string;
+  timestamp: number;
+  outcome: 'approved' | 'rejected' | 'follow_up';
+  durationSeconds?: number; // only for approved
+  aiMessage?: string;
+}
+
 export async function unblockSite(domain: string, seconds: number): Promise<{ success: boolean }> {
   const expiryTime = Date.now() + (seconds * 1000);
 
@@ -53,4 +63,39 @@ export async function removeTodoReminder(id: string): Promise<{ success: boolean
 
   console.log('Removed todo reminder:', id);
   return { success: true };
+}
+
+// Access history functions (using local storage for larger capacity)
+export async function saveAccessAttempt(attempt: Omit<AccessAttempt, 'id'>): Promise<void> {
+  const result = await chrome.storage.local.get({ accessHistory: [] });
+  const accessHistory = result.accessHistory as AccessAttempt[];
+
+  const newAttempt: AccessAttempt = {
+    ...attempt,
+    id: Date.now().toString(),
+  };
+
+  accessHistory.unshift(newAttempt);
+
+  // Keep last 500 attempts to avoid storage limits
+  const trimmed = accessHistory.slice(0, 500);
+  await chrome.storage.local.set({ accessHistory: trimmed });
+
+  console.log('📊 Saved access attempt:', newAttempt);
+}
+
+export async function getAccessHistory(domain?: string, hoursBack = 24): Promise<AccessAttempt[]> {
+  const result = await chrome.storage.local.get({ accessHistory: [] });
+  const accessHistory = result.accessHistory as AccessAttempt[];
+
+  const cutoff = Date.now() - (hoursBack * 60 * 60 * 1000);
+
+  return accessHistory.filter(a =>
+    a.timestamp > cutoff && (!domain || a.domain === domain)
+  );
+}
+
+export async function getAllAccessHistory(): Promise<AccessAttempt[]> {
+  const result = await chrome.storage.local.get({ accessHistory: [] });
+  return result.accessHistory as AccessAttempt[];
 }

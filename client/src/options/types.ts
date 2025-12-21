@@ -10,3 +10,13 @@ export interface TodoReminder {
   note?: string;
   timestamp: number;
 }
+
+export interface AccessAttempt {
+  id: string;
+  domain: string;
+  reason: string;
+  timestamp: number;
+  outcome: 'approved' | 'rejected' | 'follow_up';
+  durationSeconds?: number;
+  aiMessage?: string;
+}
