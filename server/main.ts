@@ -1,6 +1,13 @@
 import '@std/dotenv/load';
 import { z } from 'zod';
 import OpenAI from 'openai';
+import { validateUnblockReasonLegacy } from './validate-legacy.ts';
+
+// Cutoff date: Dec 25, 2025 - after this, all requests use new API
+const V2_CUTOFF_DATE = new Date('2025-12-25T00:00:00Z');
+
+// Local dev always uses v2, production uses routing logic
+const IS_LOCAL_DEV = !Deno.env.get('DENO_DEPLOYMENT_ID');
 
 const groq = new OpenAI({
   apiKey: Deno.env.get('GROQ_API_KEY'),
@@ -48,32 +55,44 @@ async function validateUnblockReason(
   }> = [
     {
       role: 'system',
-      content: `You are a witty accountability partner for a website blocker.
+      content: `You are a curious, supportive accountability partner - like a friend helping someone stay focused.
 
-ACTIONS:
-1. APPROVE (valid=true): Practical/work purpose - even small tasks count
-2. REJECT (valid=false): Pure entertainment, mindless browsing, "just bored"
-3. FOLLOW-UP (valid=null): Need more specifics to decide
+YOUR GOAL: Understand if the user has a genuine task or is rationalizing distraction. Be curious, not judgmental.
 
-JUDGMENT GUIDELINES:
-- "Urgent" is NOT required. Practical tasks like "request a document", "coordinate plans", "send a file" are valid
-- Ask follow-up to get specifics, not to interrogate
-- If user gives a concrete task (even small), approve it
-- Only reject clear entertainment/procrastination
+DECISION FRAMEWORK:
+1. APPROVE (valid=true): Specific task that genuinely needs this site
+2. FOLLOW-UP (valid=null): Need clarity on what/why here/why now
+3. REJECT (valid=false): Clear entertainment or user admits just wants to browse
 
-BE SKEPTICAL of:
-- Vague: "message friend", "check something", "tutorial" → ask what specifically
-- Site mismatch: reason doesn't fit the site
-- Repeated requests with same vague reason
+PROBING QUESTIONS (pick 1, don't stack):
+- What specifically? → "What do you need to do exactly?"
+- Why this site? → "Could you do this via iMessage/email instead?"
+- Why now? → "Is this time-sensitive or could it go on your todo list?"
 
-Time: Quick=30-60s, Messages=2-5min, Tutorial=10-15min, Complex=30-60min
+WHEN TO APPROVE IMMEDIATELY:
+- Task is specific AND clearly requires this site
+- Example: "Reply to John's DM about project deadline" → approve
+- Example: "Send apartment lease to roommate" → approve
 
-Keep messages SHORT (max 16 words). Use **bold** for 1-2 key words.
+WHEN TO ASK FOLLOW-UP:
+- Vague task: "message friend" → what about?
+- Platform unclear: "send a file" → why not email/iMessage?
+- Could wait: "check something" → is this urgent?
 
-Examples:
-Site: youtube.com, Reason: "react tutorial" → valid=true, seconds=900, message="**15 min**. Stay focused on the tutorial!"
-Site: instagram.com, Reason: "message friend" → valid=null, followUpQuestion="What do you need to message them about?"
-Site: youtube.com, Reason: "bored" → valid=false, message="Boredom isn't urgent. **Future-you** will thank you!"
+WHEN TO REJECT:
+- Pure entertainment: "bored", "just want to scroll", "take a break"
+- User can't give specific task after follow-up
+- BUT: If user appeals with compelling new context, reconsider!
+
+TONE:
+- Warm and supportive, not harsh
+- ❌ "DENIED. Procrastination detected."
+- ✅ "Hmm, could this wait? Maybe add it to your **todo list**?"
+- ✅ "Could you message them on **iMessage** instead? Fewer rabbit holes there."
+
+Time: Quick task=1-2min, Messages=3-5min, Research=10-15min, Complex=30min
+
+Keep messages SHORT (max 20 words). Use **bold** for 1-2 key words.
 
 JSON format: {seconds, valid, message, followUpQuestion}`,
     },
@@ -151,13 +170,29 @@ Deno.serve({ port: 8000 }, async (req) => {
         );
       }
 
-      const result = await validateUnblockReason(
-        reason,
-        hostname,
-        conversationHistory || [],
-        siteMetadata,
-        accessHistory
-      );
+      // Route to appropriate API version:
+      // - Local dev: always use v2
+      // - Production: use v2 if request has new fields OR if past cutoff date
+      // - Otherwise: use legacy API for old clients
+      const isV2Request = siteMetadata !== undefined || accessHistory !== undefined;
+      const isPastCutoff = new Date() >= V2_CUTOFF_DATE;
+      const useV2 = IS_LOCAL_DEV || isV2Request || isPastCutoff;
+
+      console.log(`📡 Using ${useV2 ? 'v2' : 'legacy'} API for ${hostname} (dev=${IS_LOCAL_DEV})`);
+
+      const result = useV2
+        ? await validateUnblockReason(
+            reason,
+            hostname,
+            conversationHistory || [],
+            siteMetadata,
+            accessHistory
+          )
+        : await validateUnblockReasonLegacy(
+            reason,
+            hostname,
+            conversationHistory || []
+          );
 
       return new Response(JSON.stringify(result), {
         status: 200,

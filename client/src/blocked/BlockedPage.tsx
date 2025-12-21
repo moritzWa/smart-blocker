@@ -37,14 +37,25 @@ interface AccessAttempt {
   aiMessage?: string;
 }
 
-// Simple markdown parser for **bold** text
-function parseBoldMarkdown(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
-    }
-    return part;
+// Simple markdown parser for **bold** text and newlines
+function parseMarkdown(text: string): React.ReactNode {
+  // Split by newlines first, then handle bold within each line
+  const lines = text.split(/\n/);
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(/(\*\*.*?\*\*)/g);
+    const parsedLine = parts.map((part, partIndex) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={partIndex} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+    // Add <br/> between lines, not after the last one
+    return (
+      <span key={lineIndex}>
+        {parsedLine}
+        {lineIndex < lines.length - 1 && <br />}
+      </span>
+    );
   });
 }
 
@@ -223,8 +234,12 @@ export default function BlockedPage() {
           ...conversationHistory,
           { role: 'user', content: textToSend },
         ];
+        // Add AI response to history (follow-up question or rejection message)
         if (response.followUpQuestion) {
           newHistory.push({ role: 'assistant', content: response.followUpQuestion });
+        } else if (response.valid === false && response.message) {
+          // Include rejection message so AI has context if user appeals
+          newHistory.push({ role: 'assistant', content: `[Rejected] ${response.message}` });
         }
         setConversationHistory(newHistory);
         setAiResponse(response);
@@ -424,7 +439,7 @@ export default function BlockedPage() {
               <div className="flex items-start gap-3">
                 <div className="text-2xl">🤔</div>
                 <div className="flex-1">
-                  <p className="text-foreground text-lg">{parseBoldMarkdown(aiResponse.followUpQuestion)}</p>
+                  <p className="text-foreground text-lg">{parseMarkdown(aiResponse.followUpQuestion)}</p>
                 </div>
               </div>
             </div>
@@ -471,6 +486,8 @@ export default function BlockedPage() {
             onReset={handleReset}
             onAddToTodo={handleAddToTodo}
             onGoBack={handleGoBack}
+            onReplyToDenial={handleSubmitReason}
+            loading={loading}
           />
         )}
       </div>

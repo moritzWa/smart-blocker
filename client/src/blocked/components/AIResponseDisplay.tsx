@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CornerDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FORM_WIDTH } from '../constants';
@@ -17,22 +18,27 @@ interface AIResponseDisplayProps {
   onReset: () => void;
   onAddToTodo: () => void;
   onGoBack: () => void;
+  onReplyToDenial?: (reply: string) => void;
+  loading?: boolean;
 }
 
-// Simple markdown parser for **bold** text
-function parseBoldMarkdown(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      const boldText = part.slice(2, -2);
-      return (
-        <strong key={index} className="font-bold">
-          {boldText}
-        </strong>
-      );
-    }
-    return part;
+// Simple markdown parser for **bold** text and newlines
+function parseMarkdown(text: string): React.ReactNode {
+  const lines = text.split(/\n/);
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(/(\*\*.*?\*\*)/g);
+    const parsedLine = parts.map((part, partIndex) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={partIndex} className="font-bold">{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+    return (
+      <span key={lineIndex}>
+        {parsedLine}
+        {lineIndex < lines.length - 1 && <br />}
+      </span>
+    );
   });
 }
 
@@ -44,7 +50,18 @@ export default function AIResponseDisplay({
   onReset,
   onAddToTodo,
   onGoBack,
+  onReplyToDenial,
+  loading,
 }: AIResponseDisplayProps) {
+  const [replyText, setReplyText] = useState('');
+
+  const handleSubmitReply = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (replyText.trim() && onReplyToDenial) {
+      onReplyToDenial(replyText);
+    }
+  };
+
   return (
     <>
       {/* AI Response Display */}
@@ -57,7 +74,7 @@ export default function AIResponseDisplay({
               {reason ? ` ${reason}` : ''}
             </h2>
             <p className="text-foreground text-lg leading-relaxed">
-              {parseBoldMarkdown(aiResponse.message)}
+              {parseMarkdown(aiResponse.message)}
             </p>
             {aiResponse.valid && (
               <p className="text-emerald-600 dark:text-emerald-400 font-semibold mt-3 text-lg">
@@ -90,24 +107,52 @@ export default function AIResponseDisplay({
             </Button>
           </>
         ) : (
-          <>
-            <Button
-              onClick={onGoBack}
-              variant="secondary"
-              size="lg"
-              className="flex-1"
-            >
-              Go Back
-            </Button>
-            <Button
-              onClick={onAddToTodo}
-              variant="default"
-              size="lg"
-              className="flex-1"
-            >
-              Create Reminder
-            </Button>
-          </>
+          <div className="flex flex-col gap-3 w-full">
+            {/* Reply input for denied requests */}
+            {onReplyToDenial && (
+              <form onSubmit={handleSubmitReply} className="w-full">
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Add context... (e.g. 'Actually this is urgent because...')"
+                  className="w-full p-3 text-base border rounded-lg bg-background text-foreground"
+                  disabled={loading}
+                  autoFocus
+                />
+              </form>
+            )}
+            <div className="flex gap-3">
+              <Button
+                onClick={onGoBack}
+                variant="secondary"
+                size="lg"
+                className="flex-1"
+              >
+                Go Back
+              </Button>
+              {replyText.trim() && onReplyToDenial ? (
+                <Button
+                  onClick={() => handleSubmitReply()}
+                  variant="default"
+                  size="lg"
+                  className="flex-1"
+                  disabled={loading}
+                >
+                  {loading ? 'Checking...' : 'Submit'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={onAddToTodo}
+                  variant="default"
+                  size="lg"
+                  className="flex-1"
+                >
+                  Create Reminder
+                </Button>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </>
