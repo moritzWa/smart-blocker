@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "package": "npm run build && cd .. && zip -r ai-site-blocker.zip dist/"
+    "package": "npm run build && cd .. && zip -r focus-shield.zip dist/"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",

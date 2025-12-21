@@ -53,9 +53,9 @@ cd server && deno task dev   # Run server (see Quick Start for first-time setup)
 2. Build and zip:
    ```bash
    cd client
-   npm run build
-   zip -r ../focus-shield-v1.0.x.zip dist/
+   npm run package
    ```
+   Creates `focus-shield.zip` in repo root.
 3. Upload to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
 
 ## Features
