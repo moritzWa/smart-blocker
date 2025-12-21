@@ -4,11 +4,11 @@ import UnblockedSitesList from './components/UnblockedSitesList';
 import StrictModeToggle from './components/StrictModeToggle';
 import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
-import { Button } from '@/components/ui/button';
+import AccessHistoryPanel from './components/AccessHistoryPanel';
+import FooterLinks from './components/FooterLinks';
 import { Card } from '@/components/ui/card';
 import type { UnblockedSite, TodoReminder, AccessAttempt } from './types';
 import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
-import { createSeedTodos } from './constants';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 
 // Type guards for safe storage access
@@ -51,7 +51,7 @@ export default function Options() {
   const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
   const [showImport, setShowImport] = useState(false);
   const [highlightTodos, setHighlightTodos] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
 
   // Update favicon based on strict mode
@@ -110,16 +110,14 @@ export default function Options() {
     saveSettings();
   }, [strictMode]);
 
-  // Check URL params for highlight todos (first-time reminder onboarding)
+  // Check URL params for highlight todos
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('highlightTodos') === 'true') {
       setHighlightTodos(true);
-      // Remove highlight after 8 seconds
       setTimeout(() => {
         setHighlightTodos(false);
-      }, 8000);
-      // Clean up URL without reloading
+      }, 3000);
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -269,21 +267,6 @@ export default function Options() {
     setTimeout(() => setStatus(''), 2000);
   }
 
-  async function handleSeedTodos() {
-    const exampleTodos = createSeedTodos();
-
-    // Get existing todos and append seed todos
-    const result = await chrome.storage.sync.get({ todoReminders: [] });
-    const existingTodos = result.todoReminders as TodoReminder[];
-    const mergedTodos = [...existingTodos, ...exampleTodos];
-
-    await chrome.storage.sync.set({ todoReminders: mergedTodos });
-    loadTodoReminders();
-
-    setStatus('Seeded 4 example todos!');
-    setTimeout(() => setStatus(''), 2000);
-  }
-
   function handleReviewClick() {
     // Open review URL (Chrome Web Store is always whitelisted now)
     window.open(
@@ -304,174 +287,108 @@ export default function Options() {
     setShowHistory(!showHistory);
   }
 
-  function formatHistoryTime(timestamp: number): string {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = date.toDateString() === yesterday.toDateString();
-
-    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    if (isToday) return `Today ${time}`;
-    if (isYesterday) return `Yesterday ${time}`;
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ` ${time}`;
-  }
-
   return (
     <div className="min-h-screen bg-background py-10">
-      <div className="max-w-3xl mx-auto rounded-lg p-8">
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-end gap-4">
-            <div className="flex flex-row items-center gap-4">
-              <img
-                src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
-                alt="Focus Shield"
-                className="w-12 h-12"
-              />
-              <h1 className="text-3xl font-bold text-foreground">
-                Focus Shield Settings
-              </h1>
-            </div>
+      <div className="max-w-6xl mx-auto px-8">
+        {/* Header */}
+        <div className="flex justify-between items-end gap-4 mb-6">
+          <div className="flex flex-row items-center gap-4">
+            <img
+              src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
+              alt="Focus Shield"
+              className="w-12 h-12"
+            />
+            <h1 className="text-3xl font-bold text-foreground">
+              Focus Shield Settings
+            </h1>
+          </div>
 
-            {status && (
-              <div className="text-emerald-600 dark:text-emerald-400 font-medium text-xl">
-                {status}
+          {status && (
+            <div className="text-emerald-600 dark:text-emerald-400 font-medium text-xl">
+              {status}
+            </div>
+          )}
+        </div>
+
+        {/* Two-column layout on wide screens (only when history is shown) */}
+        <div
+          className={`flex flex-col gap-6 ${
+            showHistory ? 'min-[900px]:flex-row' : ''
+          }`}
+        >
+          {/* Left column - Main settings */}
+          <div
+            className={`flex flex-col gap-6 ${
+              showHistory ? 'flex-1' : 'max-w-3xl mx-auto w-full'
+            }`}
+          >
+            <TodoRemindersList
+              todoReminders={todoReminders}
+              onRemove={handleRemoveTodoReminder}
+              onOpen={handleOpenTodoUrl}
+              onCopy={handleCopyTodos}
+              highlight={highlightTodos}
+            />
+
+            <UnblockedSitesList
+              unblockedSites={unblockedSites}
+              formatTimeRemaining={formatTimeRemaining}
+            />
+
+            <Card className="p-4 flex flex-col gap-4 rounded-xl">
+              <StrictModeToggle
+                strictMode={strictMode}
+                onChange={setStrictMode}
+              />
+
+              <SiteListInput
+                label="Always Allowed Sites"
+                description="One site per line. These sites will never be blocked."
+                value={allowedSites}
+                onChange={setAllowedSites}
+                placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
+              />
+            </Card>
+
+            <Card className="p-4 rounded-xl">
+              <SiteListInput
+                label="Blocked Sites"
+                description="One site per line. These sites will be blocked."
+                value={blockedSites}
+                onChange={setBlockedSites}
+                placeholder="youtube.com&#10;tiktok.com&#10;facebook.com"
+              />
+            </Card>
+
+            <SiteBlockImport
+              show={showImport}
+              onToggle={() => setShowImport(!showImport)}
+              onImport={handleImport}
+            />
+
+            {/* History in single-column layout (hidden on wide screens) */}
+            {showHistory && (
+              <div className="min-[900px]:hidden">
+                <AccessHistoryPanel accessHistory={accessHistory} />
               </div>
             )}
           </div>
 
-          <TodoRemindersList
-            todoReminders={todoReminders}
-            onRemove={handleRemoveTodoReminder}
-            onOpen={handleOpenTodoUrl}
-            onCopy={handleCopyTodos}
-            highlight={highlightTodos}
-          />
-
-          <UnblockedSitesList
-            unblockedSites={unblockedSites}
-            formatTimeRemaining={formatTimeRemaining}
-          />
-
-          <Card className="p-4 flex flex-col gap-4 rounded-xl">
-            <StrictModeToggle
-              strictMode={strictMode}
-              onChange={setStrictMode}
-            />
-
-            <SiteListInput
-              label="Always Allowed Sites"
-              description="One site per line. These sites will never be blocked."
-              value={allowedSites}
-              onChange={setAllowedSites}
-              placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
-            />
-          </Card>
-
-          <Card className="p-4 rounded-xl">
-            <SiteListInput
-              label="Blocked Sites"
-              description="One site per line. These sites will be blocked."
-              value={blockedSites}
-              onChange={setBlockedSites}
-              placeholder="youtube.com&#10;tiktok.com&#10;facebook.com"
-            />
-          </Card>
-
-          <SiteBlockImport
-            show={showImport}
-            onToggle={() => setShowImport(!showImport)}
-            onImport={handleImport}
-          />
-
+          {/* Right column - Access History (visible on wide screens when shown) */}
           {showHistory && (
-            <Card className="p-4 rounded-xl">
-              <h3 className="text-lg font-semibold mb-3">Access History</h3>
-              {accessHistory.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No history yet</p>
-              ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {accessHistory.map((attempt) => (
-                    <div
-                      key={attempt.id}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 text-sm"
-                    >
-                      <span className="text-lg">
-                        {attempt.outcome === 'approved' ? '✅' : attempt.outcome === 'rejected' ? '❌' : '🤔'}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{attempt.domain}</div>
-                        <div className="text-muted-foreground truncate">"{attempt.reason}"</div>
-                      </div>
-                      <div className="text-muted-foreground text-xs whitespace-nowrap">
-                        {formatHistoryTime(attempt.timestamp)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
+            <div className="hidden min-[900px]:block min-[900px]:flex-1">
+              <AccessHistoryPanel accessHistory={accessHistory} />
+            </div>
           )}
-
-          <div className="flex gap-4 justify-between text-center">
-            <Button
-              variant="link"
-              size="sm"
-              className="cursor-pointer text-muted-foreground"
-              onClick={handleToggleHistory}
-            >
-              {showHistory ? 'Hide History' : 'History'}
-            </Button>
-            <Button
-              variant="link"
-              size="sm"
-              className="cursor-pointer text-muted-foreground"
-              onClick={handleReviewClick}
-            >
-              Review Extension
-            </Button>
-            <Button
-              variant="link"
-              size="sm"
-              className="cursor-pointer text-muted-foreground"
-              onClick={() => {
-                const onboardingUrl = chrome.runtime.getURL(
-                  'src/onboarding/onboarding.html'
-                );
-                chrome.tabs.create({ url: onboardingUrl });
-              }}
-            >
-              View Onboarding
-            </Button>
-            <Button
-              variant="link"
-              size="sm"
-              className="cursor-pointer text-muted-foreground"
-              onClick={() => setShowImport(!showImport)}
-            >
-              Import from SiteBlock
-            </Button>
-            {/* <Button
-              variant="link"
-              size="sm"
-              className="cursor-pointer text-muted-foreground"
-              onClick={handleSeedTodos}
-            >
-              Seed ToDos
-            </Button> */}
-            <Button
-              variant="link"
-              size="sm"
-              className="cursor-pointer text-muted-foreground"
-              onClick={() => window.open('https://moritzw.com', '_blank')}
-            >
-              Made by Moritz W.
-            </Button>
-          </div>
         </div>
       </div>
+
+      <FooterLinks
+        showHistory={showHistory}
+        onToggleHistory={handleToggleHistory}
+        onReviewClick={handleReviewClick}
+        onToggleImport={() => setShowImport(!showImport)}
+      />
     </div>
   );
 }

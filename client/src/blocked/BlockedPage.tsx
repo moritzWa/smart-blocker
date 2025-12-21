@@ -215,19 +215,30 @@ export default function BlockedPage() {
       if ('error' in response) {
         setError(response.error);
       } else {
-        // Save access attempt to history
+        // Save access attempt to history (only for final outcomes, not follow-ups)
         const outcome = response.valid === true ? 'approved' : response.valid === false ? 'rejected' : 'follow_up';
-        chrome.runtime.sendMessage({
-          type: 'SAVE_ACCESS_ATTEMPT',
-          attempt: {
-            domain,
-            reason: textToSend,
-            timestamp: Date.now(),
-            outcome,
-            durationSeconds: response.valid ? response.seconds : undefined,
-            aiMessage: response.message || response.followUpQuestion,
-          },
-        });
+
+        // Combine all user messages from conversation into one reason
+        const allUserMessages = [
+          ...conversationHistory.filter(m => m.role === 'user').map(m => m.content),
+          textToSend
+        ];
+        const combinedReason = allUserMessages.join(', ');
+
+        // Only save to history for final outcomes (approved/rejected), not follow-ups
+        if (response.valid !== null) {
+          chrome.runtime.sendMessage({
+            type: 'SAVE_ACCESS_ATTEMPT',
+            attempt: {
+              domain,
+              reason: combinedReason,
+              timestamp: Date.now(),
+              outcome,
+              durationSeconds: response.valid ? response.seconds : undefined,
+              aiMessage: response.message,
+            },
+          });
+        }
 
         // Update conversation history
         const newHistory: ConversationMessage[] = [
@@ -276,14 +287,11 @@ export default function BlockedPage() {
   };
 
   const handleSaveTodoReminder = async () => {
-    // Check if this is the first time creating a reminder and increment count
     const result = await chrome.storage.sync.get({
-      hasCreatedFirstReminder: false,
       reminderCount: 0,
       reviewDismissCount: 0,
       reviewDismissedPermanently: false,
     });
-    const isFirstReminder = !result.hasCreatedFirstReminder;
 
     await chrome.runtime.sendMessage({
       type: 'ADD_TODO_REMINDER',
@@ -301,38 +309,28 @@ export default function BlockedPage() {
       shouldShowReview(newReminderCount, 2);
 
     if (shouldShowReviewAfterReminder) {
-      // Show review request instead of "Reminder Saved!" + close
       setReviewDismissCount(result.reviewDismissCount as number);
       setShowReviewRequest(true);
-      setTodoSaved(true); // Still set this so we know to handle close after review
+      setTodoSaved(true);
       return;
     }
 
-    // Show saved confirmation
+    // Show saved confirmation briefly, then redirect to options page
     setTodoSaved(true);
 
-    // After showing confirmation, handle navigation
     setTimeout(async () => {
-      if (isFirstReminder) {
-        // Mark that user has created their first reminder
-        await chrome.storage.sync.set({ hasCreatedFirstReminder: true });
-
-        // Open options page with highlight parameter in URL
-        console.log(
-          '🎉 First reminder! Opening options page to show where reminders go'
-        );
-        const optionsUrl =
-          chrome.runtime.getURL('src/options/options.html') +
-          '?highlightTodos=true';
-        chrome.tabs.create({ url: optionsUrl });
-      }
+      // Always open options page with highlight
+      const optionsUrl =
+        chrome.runtime.getURL('src/options/options.html') +
+        '?highlightTodos=true';
+      chrome.tabs.create({ url: optionsUrl });
 
       // Close current tab
       const tab = await chrome.tabs.getCurrent();
       if (tab?.id) {
         chrome.tabs.remove(tab.id);
       }
-    }, 1300);
+    }, 800);
   };
 
   const handleReset = () => {
