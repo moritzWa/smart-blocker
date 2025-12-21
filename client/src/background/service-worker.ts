@@ -4,6 +4,65 @@ import { unblockSite, addTodoReminder, removeTodoReminder, saveAccessAttempt, ge
 
 console.log('Focus Shield service worker loaded');
 
+// ============================================
+// Blocked Session Tracking (for history)
+// ============================================
+
+interface BlockedSession {
+  tabId: number;
+  domain: string;
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
+  lastAiMessage?: string;
+  startTime: number;
+}
+
+// Track active blocked page sessions
+const activeBlockedSessions = new Map<number, BlockedSession>();
+
+// Save session to history when resolved or abandoned
+async function saveSessionToHistory(
+  session: BlockedSession,
+  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned',
+  durationSeconds?: number
+) {
+  // Only save if there was at least one user message
+  const userMessages = session.conversationHistory
+    .filter(m => m.role === 'user')
+    .map(m => m.content);
+
+  if (userMessages.length === 0) {
+    console.log(`📝 No user messages for ${session.domain}, skipping history save`);
+    return;
+  }
+
+  const combinedReason = userMessages.join(', ');
+
+  await saveAccessAttempt({
+    domain: session.domain,
+    reason: combinedReason,
+    timestamp: Date.now(),
+    outcome,
+    durationSeconds,
+    aiMessage: session.lastAiMessage,
+  });
+
+  console.log(`📝 Saved ${outcome} session for ${session.domain}: "${combinedReason}"`);
+}
+
+// Listen for tab close to save abandoned sessions
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const session = activeBlockedSessions.get(tabId);
+  if (session) {
+    console.log(`🚪 Tab ${tabId} closed with active session for ${session.domain}`);
+    await saveSessionToHistory(session, 'abandoned');
+    activeBlockedSessions.delete(tabId);
+  }
+});
+
+// ============================================
+// Site Metadata
+// ============================================
+
 // Fetch site metadata (title, description) from URL
 async function fetchSiteMetadata(url: string): Promise<{ title: string; description: string } | null> {
   try {
@@ -345,6 +404,47 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === 'REMOVE_TODO_REMINDER') {
     removeTodoReminder(message.id).then(sendResponse);
+    return true;
+  }
+
+  // ============================================
+  // Blocked Session Management
+  // ============================================
+
+  if (message.type === 'REGISTER_BLOCKED_SESSION') {
+    const { tabId, domain } = message;
+    activeBlockedSessions.set(tabId, {
+      tabId,
+      domain,
+      conversationHistory: [],
+      startTime: Date.now(),
+    });
+    console.log(`📝 Registered blocked session for tab ${tabId}: ${domain}`);
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === 'UPDATE_BLOCKED_SESSION') {
+    const { tabId, conversationHistory, lastAiMessage } = message;
+    const session = activeBlockedSessions.get(tabId);
+    if (session) {
+      session.conversationHistory = conversationHistory;
+      session.lastAiMessage = lastAiMessage;
+      console.log(`📝 Updated session for tab ${tabId}: ${conversationHistory.length} messages`);
+    }
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === 'RESOLVE_BLOCKED_SESSION') {
+    const { tabId, outcome, durationSeconds } = message;
+    const session = activeBlockedSessions.get(tabId);
+    if (session) {
+      await saveSessionToHistory(session, outcome, durationSeconds);
+      activeBlockedSessions.delete(tabId);
+      console.log(`✅ Resolved session for tab ${tabId}: ${outcome}`);
+    }
+    sendResponse({ success: true });
     return true;
   }
 });

@@ -7,7 +7,7 @@ import ReviewRequestCard from './components/ReviewRequestCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 import { useReviewRequest } from './hooks/useReviewRequest';
-import { shouldShowReview, formatTime } from './utils';
+import { shouldShowReview, formatTime, parseMarkdown } from './utils';
 import { FORM_WIDTH } from './constants';
 
 interface AIResponse {
@@ -32,31 +32,9 @@ interface AccessAttempt {
   domain: string;
   reason: string;
   timestamp: number;
-  outcome: 'approved' | 'rejected' | 'follow_up';
+  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned';
   durationSeconds?: number;
   aiMessage?: string;
-}
-
-// Simple markdown parser for **bold** text and newlines
-function parseMarkdown(text: string): React.ReactNode {
-  // Split by newlines first, then handle bold within each line
-  const lines = text.split(/\n/);
-  return lines.map((line, lineIndex) => {
-    const parts = line.split(/(\*\*.*?\*\*)/g);
-    const parsedLine = parts.map((part, partIndex) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={partIndex} className="font-bold">{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
-    // Add <br/> between lines, not after the last one
-    return (
-      <span key={lineIndex}>
-        {parsedLine}
-        {lineIndex < lines.length - 1 && <br />}
-      </span>
-    );
-  });
 }
 
 export default function BlockedPage() {
@@ -74,6 +52,7 @@ export default function BlockedPage() {
   const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
+  const [tabId, setTabId] = useState<number | null>(null);
   const reasonInputRef = useRef<HTMLInputElement>(null);
 
   // Review request logic
@@ -129,6 +108,20 @@ export default function BlockedPage() {
       }
     }
 
+    // Register this session with the service worker
+    chrome.tabs.getCurrent().then((tab) => {
+      if (tab?.id) {
+        setTabId(tab.id);
+        const domain = url ? new URL(url).hostname.replace(/^www\./, '') : '';
+        chrome.runtime.sendMessage({
+          type: 'REGISTER_BLOCKED_SESSION',
+          tabId: tab.id,
+          domain,
+        });
+        console.log(`📝 Registered blocked session for tab ${tab.id}`);
+      }
+    });
+
     // Load settings and increment blocked page view count
     chrome.storage.sync.get(
       {
@@ -171,6 +164,18 @@ export default function BlockedPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [aiResponse?.valid, blockedUrl]);
 
+  // Update session in service worker when conversation changes
+  useEffect(() => {
+    if (tabId && conversationHistory.length > 0) {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_BLOCKED_SESSION',
+        tabId,
+        conversationHistory,
+        lastAiMessage: aiResponse?.message || aiResponse?.followUpQuestion,
+      });
+    }
+  }, [tabId, conversationHistory, aiResponse]);
+
   // Handle Cmd+S to trigger "Remind Me Later"
   useEffect(() => {
     // Only work when showing reason form (not todo input, not AI response, not loading)
@@ -194,14 +199,6 @@ export default function BlockedPage() {
     setLoading(true);
     setError(null);
 
-    // Get domain for history
-    let domain = '';
-    try {
-      domain = new URL(blockedUrl).hostname.replace(/^www\./, '');
-    } catch {
-      domain = displayUrl;
-    }
-
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'VALIDATE_REASON',
@@ -215,31 +212,6 @@ export default function BlockedPage() {
       if ('error' in response) {
         setError(response.error);
       } else {
-        // Save access attempt to history (only for final outcomes, not follow-ups)
-        const outcome = response.valid === true ? 'approved' : response.valid === false ? 'rejected' : 'follow_up';
-
-        // Combine all user messages from conversation into one reason
-        const allUserMessages = [
-          ...conversationHistory.filter(m => m.role === 'user').map(m => m.content),
-          textToSend
-        ];
-        const combinedReason = allUserMessages.join(', ');
-
-        // Only save to history for final outcomes (approved/rejected), not follow-ups
-        if (response.valid !== null) {
-          chrome.runtime.sendMessage({
-            type: 'SAVE_ACCESS_ATTEMPT',
-            attempt: {
-              domain,
-              reason: combinedReason,
-              timestamp: Date.now(),
-              outcome,
-              durationSeconds: response.valid ? response.seconds : undefined,
-              aiMessage: response.message,
-            },
-          });
-        }
-
         // Update conversation history
         const newHistory: ConversationMessage[] = [
           ...conversationHistory,
@@ -272,6 +244,16 @@ export default function BlockedPage() {
   const handleConfirmUnblock = async () => {
     if (!aiResponse?.valid) return;
 
+    // Resolve the session as approved before navigating away
+    if (tabId) {
+      await chrome.runtime.sendMessage({
+        type: 'RESOLVE_BLOCKED_SESSION',
+        tabId,
+        outcome: 'approved',
+        durationSeconds: aiResponse.seconds,
+      });
+    }
+
     // Extract just the hostname for unblocking (remove path/query params and www)
     const hostnameOnly = new URL(blockedUrl).hostname;
     const domain = hostnameOnly.replace(/^www\./, '');
@@ -287,6 +269,15 @@ export default function BlockedPage() {
   };
 
   const handleSaveTodoReminder = async () => {
+    // Resolve the session as reminder
+    if (tabId) {
+      await chrome.runtime.sendMessage({
+        type: 'RESOLVE_BLOCKED_SESSION',
+        tabId,
+        outcome: 'reminder',
+      });
+    }
+
     const result = await chrome.storage.sync.get({
       reminderCount: 0,
       reviewDismissCount: 0,
@@ -341,7 +332,15 @@ export default function BlockedPage() {
     setFollowUpAnswer('');
   };
 
-  const handleGoBack = () => {
+  const handleGoBack = async () => {
+    // Resolve session as abandoned if there was any conversation
+    if (tabId && conversationHistory.length > 0) {
+      await chrome.runtime.sendMessage({
+        type: 'RESOLVE_BLOCKED_SESSION',
+        tabId,
+        outcome: 'abandoned',
+      });
+    }
     console.log('🔙 Going back 2 steps in history to avoid redirect loop');
     window.history.go(-2);
   };

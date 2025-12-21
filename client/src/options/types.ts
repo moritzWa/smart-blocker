@@ -16,7 +16,7 @@ export interface AccessAttempt {
   domain: string;
   reason: string;
   timestamp: number;
-  outcome: 'approved' | 'rejected' | 'follow_up';
+  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned';
   durationSeconds?: number;
   aiMessage?: string;
 }

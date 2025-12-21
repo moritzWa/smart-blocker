@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import type { AccessAttempt } from '../types';
+import { parseMarkdown } from '@/blocked/utils';
 
 interface AccessHistoryPanelProps {
   accessHistory: AccessAttempt[];
@@ -80,8 +81,10 @@ export default function AccessHistoryPanel({
                       {attempt.outcome === 'approved'
                         ? '✅'
                         : attempt.outcome === 'rejected'
-                          ? '❌'
-                          : '🤔'}
+                        ? '❌'
+                        : attempt.outcome === 'reminder'
+                        ? '📝'
+                        : '🚪'}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-2">
@@ -92,12 +95,12 @@ export default function AccessHistoryPanel({
                           {formatHistoryTime(attempt.timestamp)}
                         </div>
                       </div>
-                      <div className="text-foreground">
+                      <div className="text-foreground text-xs">
                         {capitalizeFirst(attempt.reason)}
                       </div>
                       {attempt.aiMessage && (
                         <div className="text-muted-foreground text-xs mt-1 italic">
-                          {attempt.aiMessage}
+                          {parseMarkdown(attempt.aiMessage)}
                         </div>
                       )}
                     </div>

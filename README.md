@@ -27,9 +27,8 @@ Built extension will be in `dist/` folder.
 
 ```bash
 cd server
-cp .env.example .env  # Add your OPENAI_API_KEY
-deno install         # Cache dependencies
-deno run --allow-net --allow-read --allow-env main.ts
+cp .env.example .env  # Add your GROQ_API_KEY
+deno task dev
 ```
 
 Server runs on `http://localhost:8000`
@@ -43,26 +42,16 @@ Server runs on `http://localhost:8000`
 
 ### Development
 
-**Client:**%
-
 ```bash
-cd client
-npm run dev    # Watch mode
-npm run build  # Production build
-```
-
-**Server:**
-
-```bash
-cd server
-deno run --allow-net --allow-read --allow-env main.ts
+cd client && npm run dev     # Watch mode for extension
+cd server && deno task dev   # Run server (see Quick Start for first-time setup)
 ```
 
 ## Features
 
 ### Current
 
-- **AI Bouncer**: Uses GPT-4o-mini to validate unblock reasons (e.g., "Check Facebook Marketplace" vs "just bored")
+- **AI Bouncer**: Uses Llama 3.3 70B to validate unblock reasons (e.g., "Check Facebook Marketplace" vs "just bored")
 - **Block distracting sites** with allowlist/blocklist
 - **Allow-Only Mode**: Block everything except allowed sites
 - **Temporary unblock** with AI-determined duration (1-60 minutes)
@@ -111,6 +100,6 @@ https://www.facebook.com/
 **Server:**
 
 - Deno runtime
-- OpenAI API (GPT-4o-mini)
+- Groq API (Llama 3.3 70B)
 - Zod for structured outputs
 - CORS-enabled REST API
