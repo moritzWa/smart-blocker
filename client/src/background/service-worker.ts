@@ -438,13 +438,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === 'RESOLVE_BLOCKED_SESSION') {
     const { tabId, outcome, durationSeconds } = message;
-    const session = activeBlockedSessions.get(tabId);
-    if (session) {
-      await saveSessionToHistory(session, outcome, durationSeconds);
-      activeBlockedSessions.delete(tabId);
-      console.log(`✅ Resolved session for tab ${tabId}: ${outcome}`);
-    }
-    sendResponse({ success: true });
+    (async () => {
+      try {
+        const session = activeBlockedSessions.get(tabId);
+        if (session) {
+          await saveSessionToHistory(session, outcome, durationSeconds);
+          activeBlockedSessions.delete(tabId);
+          console.log(`✅ Resolved session for tab ${tabId}: ${outcome}`);
+        }
+        sendResponse({ success: true });
+      } catch (error) {
+        console.error('Failed to resolve session:', error);
+        sendResponse({ success: false });
+      }
+    })();
     return true;
   }
 });

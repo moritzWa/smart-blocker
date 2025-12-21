@@ -19,13 +19,13 @@ export interface AccessAttempt {
   domain: string;
   reason: string;
   timestamp: number;
-  outcome: 'approved' | 'rejected' | 'follow_up';
+  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned';
   durationSeconds?: number;
 }
 
-// const VALIDATION_SERVICE_URL =
-// 'https://smart-blocker.moritzwa.deno.net/validate';
-const VALIDATION_SERVICE_URL = 'http://localhost:8000/validate';
+const VALIDATION_SERVICE_URL = import.meta.env.DEV
+  ? 'http://localhost:8000/validate'
+  : 'https://smart-blocker.moritzwa.deno.net/validate';
 const REQUEST_TIMEOUT = 10000; // 10 seconds
 const MAX_RETRIES = 5; // Increased for serverless cold starts
 
@@ -63,7 +63,9 @@ export async function validateUnblockReason(
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       console.log(
-        `🤖 AI validation attempt ${attempt}/${MAX_RETRIES} for ${hostname}`
+        `🤖 AI validation attempt ${attempt}/${MAX_RETRIES} for ${hostname}`,
+        '\n📜 Conversation history:', conversationHistory,
+        '\n💬 Current message:', reason
       );
 
       const response = await fetchWithTimeout(

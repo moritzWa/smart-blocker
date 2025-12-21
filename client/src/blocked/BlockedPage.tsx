@@ -46,7 +46,9 @@ export default function BlockedPage() {
   const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<
+    ConversationMessage[]
+  >([]);
   const [followUpAnswer, setFollowUpAnswer] = useState('');
   const [siteMetadata, setSiteMetadata] = useState<SiteMetadata | null>(null);
   const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
@@ -54,6 +56,7 @@ export default function BlockedPage() {
   const [todoSaved, setTodoSaved] = useState(false);
   const [tabId, setTabId] = useState<number | null>(null);
   const reasonInputRef = useRef<HTMLInputElement>(null);
+  const followUpInputRef = useRef<HTMLInputElement>(null);
 
   // Review request logic
   const {
@@ -87,22 +90,26 @@ export default function BlockedPage() {
 
     // Fetch site metadata in background
     if (url) {
-      chrome.runtime.sendMessage({ type: 'GET_SITE_METADATA', url }).then((metadata) => {
-        if (metadata) {
-          setSiteMetadata(metadata);
-          console.log('📄 Got site metadata:', metadata);
-        }
-      });
+      chrome.runtime
+        .sendMessage({ type: 'GET_SITE_METADATA', url })
+        .then((metadata) => {
+          if (metadata) {
+            setSiteMetadata(metadata);
+            console.log('📄 Got site metadata:', metadata);
+          }
+        });
 
       // Fetch access history for this domain
       try {
         const domain = new URL(url).hostname.replace(/^www\./, '');
-        chrome.runtime.sendMessage({ type: 'GET_ACCESS_HISTORY', domain, hoursBack: 24 }).then((history) => {
-          if (history) {
-            setAccessHistory(history);
-            console.log('📊 Got access history:', history);
-          }
-        });
+        chrome.runtime
+          .sendMessage({ type: 'GET_ACCESS_HISTORY', domain, hoursBack: 24 })
+          .then((history) => {
+            if (history) {
+              setAccessHistory(history);
+              console.log('📊 Got access history:', history);
+            }
+          });
       } catch {
         // ignore URL parse errors
       }
@@ -192,6 +199,13 @@ export default function BlockedPage() {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [showTodoInput, aiResponse, loading]);
 
+  // Focus follow-up input when a follow-up question appears
+  useEffect(() => {
+    if (aiResponse?.followUpQuestion) {
+      followUpInputRef.current?.focus();
+    }
+  }, [aiResponse?.followUpQuestion]);
+
   const handleSubmitReason = async (messageToSend?: string) => {
     const textToSend = messageToSend ?? reason;
     if (!textToSend.trim()) return;
@@ -219,10 +233,16 @@ export default function BlockedPage() {
         ];
         // Add AI response to history (follow-up question or rejection message)
         if (response.followUpQuestion) {
-          newHistory.push({ role: 'assistant', content: response.followUpQuestion });
+          newHistory.push({
+            role: 'assistant',
+            content: response.followUpQuestion,
+          });
         } else if (response.valid === false && response.message) {
           // Include rejection message so AI has context if user appeals
-          newHistory.push({ role: 'assistant', content: `[Rejected] ${response.message}` });
+          newHistory.push({
+            role: 'assistant',
+            content: `[Rejected] ${response.message}`,
+          });
         }
         setConversationHistory(newHistory);
         setAiResponse(response);
@@ -433,10 +453,12 @@ export default function BlockedPage() {
           // Follow-up question
           <div className={FORM_WIDTH}>
             <div className="mb-6 p-5 bg-muted rounded-lg text-left">
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <div className="text-2xl">🤔</div>
                 <div className="flex-1">
-                  <p className="text-foreground text-lg">{parseMarkdown(aiResponse.followUpQuestion)}</p>
+                  <p className="text-foreground text-lg">
+                    {parseMarkdown(aiResponse.followUpQuestion)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -448,12 +470,12 @@ export default function BlockedPage() {
               className="w-full"
             >
               <input
+                ref={followUpInputRef}
                 type="text"
                 value={followUpAnswer}
                 onChange={(e) => setFollowUpAnswer(e.target.value)}
                 placeholder="Your answer..."
                 className="w-full p-4 text-lg border rounded-lg mb-4 bg-background text-foreground"
-                autoFocus
                 disabled={loading}
               />
               <div className="flex gap-3">

@@ -29,7 +29,11 @@ function parseMarkdown(text: string): React.ReactNode {
     const parts = line.split(/(\*\*.*?\*\*)/g);
     const parsedLine = parts.map((part, partIndex) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={partIndex} className="font-bold">{part.slice(2, -2)}</strong>;
+        return (
+          <strong key={partIndex} className="font-bold">
+            {part.slice(2, -2)}
+          </strong>
+        );
       }
       return part;
     });
