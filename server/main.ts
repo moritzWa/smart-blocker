@@ -134,24 +134,7 @@ IMPORTANT: "seconds" must be a plain integer (e.g., 900), NOT an expression (e.g
     model: 'llama-3.3-70b-versatile',
     temperature: 0.7,
     messages: userMessages,
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'unblock_response',
-        strict: true,
-        schema: {
-          type: 'object',
-          properties: {
-            seconds: { type: 'integer', description: 'Duration in seconds (0-3600)' },
-            valid: { type: ['boolean', 'null'], description: 'true=approve, false=reject, null=need follow-up' },
-            message: { type: 'string', description: 'Short message to user (max 20 words)' },
-            followUpQuestion: { type: ['string', 'null'], description: 'Question if valid is null' },
-          },
-          required: ['seconds', 'valid', 'message', 'followUpQuestion'],
-          additionalProperties: false,
-        },
-      },
-    },
+    response_format: { type: 'json_object' },
   });
 
   const response = completion.choices[0].message.content;
