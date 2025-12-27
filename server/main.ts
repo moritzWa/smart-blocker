@@ -74,6 +74,7 @@ WHEN TO APPROVE IMMEDIATELY:
 - Task is specific AND clearly requires this site
 - Example: "Reply to John's DM about project deadline" → approve
 - Example: "Send apartment lease to roommate" → approve
+- Shared content: "friend/someone sent me this" → allow brief check (30-60s), user may not know what's in it yet
 
 WHEN TO ASK FOLLOW-UP:
 - Vague task: "message friend" → what about?
