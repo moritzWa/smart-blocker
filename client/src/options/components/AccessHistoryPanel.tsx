@@ -65,7 +65,7 @@ export default function AccessHistoryPanel({
           No history yet. Once you unblock a site, it will appear here.
         </p>
       ) : (
-        <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        <div className="space-y-4 overflow-y-auto">
           {Array.from(groupedHistory.entries()).map(([dayLabel, attempts]) => (
             <div key={dayLabel}>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">

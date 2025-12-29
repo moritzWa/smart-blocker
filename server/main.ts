@@ -84,6 +84,7 @@ WHEN TO ASK FOLLOW-UP:
 WHEN TO REJECT:
 - Pure entertainment: "bored", "just want to scroll", "take a break"
 - Non-answers: "not sure", "idk", "umm", "don't know" → reject immediately (real tasks can be articulated)
+  - EXCEPTION: If someone shared content with them, "I don't know" is valid—they haven't seen it yet!
 - User can't give specific task after 1 follow-up
 - BUT: If user appeals with compelling new context, reconsider!
 
