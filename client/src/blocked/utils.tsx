@@ -34,6 +34,7 @@ export function parseMarkdown(text: string): ReactNode {
   });
 }
 
+
 // Helper to format seconds into human-readable time
 export function formatTime(seconds: number): string {
   if (seconds < 60) {

@@ -191,13 +191,13 @@ export default function BlockedPage() {
     const handleKeyPress = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault(); // Prevent browser's Save dialog
-        setShowTodoInput(true);
+        handleShowTodoInput();
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showTodoInput, aiResponse, loading]);
+  }, [showTodoInput, aiResponse, loading, siteMetadata]);
 
   // Focus follow-up input when a follow-up question appears
   useEffect(() => {
@@ -365,6 +365,13 @@ export default function BlockedPage() {
     window.history.go(-2);
   };
 
+  const handleShowTodoInput = () => {
+    if (siteMetadata?.title) {
+      setTodoNote(siteMetadata.title);
+    }
+    setShowTodoInput(true);
+  };
+
   const handleAddToTodo = () => {
     setTodoNote(reason); // Auto-fill with original reason
     setShowTodoInput(true);
@@ -437,7 +444,7 @@ export default function BlockedPage() {
                 loading={loading}
                 error={error}
                 inputRef={reasonInputRef}
-                onShowTodoInput={() => setShowTodoInput(true)}
+                onShowTodoInput={handleShowTodoInput}
                 onGoBack={handleGoBack}
               />
             ) : (
