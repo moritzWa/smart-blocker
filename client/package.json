@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "package": "npm run build && cd .. && zip -r focus-shield.zip dist/"
+    "package": "npm run build && cd .. && zip -r focus-shield-v$(grep -o '\"version\": *\"[^\"]*\"' client/manifest.json | grep -o '[0-9][^\"]*').zip dist/"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
