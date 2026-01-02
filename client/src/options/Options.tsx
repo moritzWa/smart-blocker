@@ -206,6 +206,15 @@ export default function Options() {
     loadTodoReminders();
   }
 
+  async function handleEditTodoReminder(id: string, note: string) {
+    await chrome.runtime.sendMessage({
+      type: 'UPDATE_TODO_REMINDER',
+      id,
+      note,
+    });
+    loadTodoReminders();
+  }
+
   async function handleOpenTodoUrl(url: string, id: string) {
     // Remove todo reminder and open URL
     await chrome.runtime.sendMessage({
@@ -228,6 +237,42 @@ export default function Options() {
 
     await navigator.clipboard.writeText(todoText);
     setStatus('Copied to clipboard!');
+    setTimeout(() => setStatus(''), 2000);
+  }
+
+  async function handleSeedTodos() {
+    const exampleTodos: TodoReminder[] = [
+      {
+        id: `seed-${Date.now()}-1`,
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        hostname: 'youtube.com',
+        note: 'Watch tutorial on React hooks',
+        timestamp: Date.now() - 1800000,
+      },
+      {
+        id: `seed-${Date.now()}-2`,
+        url: 'https://x.com/naval/status/1234567890',
+        hostname: 'x.com',
+        note: 'Read thread about productivity',
+        timestamp: Date.now() - 5400000,
+      },
+      {
+        id: `seed-${Date.now()}-3`,
+        url: 'https://www.linkedin.com/in/example',
+        hostname: 'linkedin.com',
+        note: "Reply to Mike's message",
+        timestamp: Date.now() - 2700000,
+      },
+    ];
+
+    const result = await chrome.storage.sync.get({ todoReminders: [] });
+    const existingTodos = result.todoReminders as TodoReminder[];
+    const mergedTodos = [...exampleTodos, ...existingTodos];
+
+    await chrome.storage.sync.set({ todoReminders: mergedTodos });
+    loadTodoReminders();
+
+    setStatus('Seeded 3 example todos!');
     setTimeout(() => setStatus(''), 2000);
   }
 
@@ -319,12 +364,13 @@ export default function Options() {
           {/* Left column - Main settings */}
           <div
             className={`flex flex-col gap-6 ${
-              showHistory ? 'flex-1' : 'max-w-3xl mx-auto w-full'
+              showHistory ? 'w-full max-w-3xl' : 'max-w-3xl mx-auto w-full'
             }`}
           >
             <TodoRemindersList
               todoReminders={todoReminders}
               onRemove={handleRemoveTodoReminder}
+              onEdit={handleEditTodoReminder}
               onOpen={handleOpenTodoUrl}
               onCopy={handleCopyTodos}
               highlight={highlightTodos}
@@ -368,7 +414,7 @@ export default function Options() {
 
             {/* History in single-column layout (hidden on wide screens) */}
             {showHistory && (
-              <div className="min-[900px]:hidden">
+              <div className="min-[900px]:hidden min-w-[400px]">
                 <AccessHistoryPanel accessHistory={accessHistory} />
               </div>
             )}
@@ -376,7 +422,7 @@ export default function Options() {
 
           {/* Right column - Access History (visible on wide screens when shown) */}
           {showHistory && (
-            <div className="hidden min-[900px]:block min-[900px]:flex-1">
+            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:min-w-[300px]">
               <AccessHistoryPanel accessHistory={accessHistory} />
             </div>
           )}
@@ -388,6 +434,7 @@ export default function Options() {
         onToggleHistory={handleToggleHistory}
         onReviewClick={handleReviewClick}
         onToggleImport={() => setShowImport(!showImport)}
+        onSeedTodos={handleSeedTodos}
       />
     </div>
   );

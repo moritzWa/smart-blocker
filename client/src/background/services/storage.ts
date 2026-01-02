@@ -65,6 +65,19 @@ export async function removeTodoReminder(id: string): Promise<{ success: boolean
   return { success: true };
 }
 
+export async function updateTodoReminder(id: string, note: string): Promise<{ success: boolean }> {
+  const result = await chrome.storage.sync.get({ todoReminders: [] });
+  const todoReminders = result.todoReminders as TodoReminder[];
+
+  const updated = todoReminders.map(r =>
+    r.id === id ? { ...r, note: note || undefined } : r
+  );
+  await chrome.storage.sync.set({ todoReminders: updated });
+
+  console.log('Updated todo reminder:', id, note);
+  return { success: true };
+}
+
 // Access history functions (using local storage for larger capacity)
 export async function saveAccessAttempt(attempt: Omit<AccessAttempt, 'id'>): Promise<void> {
   const result = await chrome.storage.local.get({ accessHistory: [] });

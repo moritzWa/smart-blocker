@@ -1,6 +1,6 @@
 import { checkIfBlocked, normalizeUrl } from './utils/blocking';
 import { validateUnblockReason } from './services/ai-validation';
-import { unblockSite, addTodoReminder, removeTodoReminder, saveAccessAttempt, getAccessHistory } from './services/storage';
+import { unblockSite, addTodoReminder, removeTodoReminder, updateTodoReminder, saveAccessAttempt, getAccessHistory } from './services/storage';
 
 console.log('Focus Shield service worker loaded');
 
@@ -404,6 +404,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === 'REMOVE_TODO_REMINDER') {
     removeTodoReminder(message.id).then(sendResponse);
+    return true;
+  }
+
+  if (message.type === 'UPDATE_TODO_REMINDER') {
+    updateTodoReminder(message.id, message.note).then(sendResponse);
     return true;
   }
 

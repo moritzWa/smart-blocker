@@ -366,7 +366,14 @@ export default function BlockedPage() {
   };
 
   const handleShowTodoInput = () => {
-    if (siteMetadata?.title) {
+    // Priority: user's typed reason > page title > empty
+
+    console.log('🔍 siteMetadata:', siteMetadata);
+    console.log('🔍 reason:', reason);
+
+    if (reason.trim()) {
+      setTodoNote(reason.trim());
+    } else if (siteMetadata?.title) {
       setTodoNote(siteMetadata.title);
     }
     setShowTodoInput(true);
