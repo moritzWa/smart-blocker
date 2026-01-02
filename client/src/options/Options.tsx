@@ -285,7 +285,8 @@ export default function Options() {
       // Today - recent attempts
       {
         id: `seed-${now}-1`,
-        domain: 'youtube.com',
+        domain:
+          'https://www.youtube.com/watch?v=mbDlCOoMZfs&pp=ygUodWZjIHJlY3J1aXRpbmcgZnVubmVsIG1pbGl0aWEgdXNiZWtpc3RhbtIHCQlNCgGHKiGM7w%3D%3D',
         reason: 'Watch the new Fireship video on Bun 2.0',
         timestamp: now - 15 * MINUTE,
         outcome: 'approved',

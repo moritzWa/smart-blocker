@@ -6,6 +6,62 @@ interface AccessHistoryPanelProps {
   accessHistory: AccessAttempt[];
 }
 
+// Get favicon URL from Google's service
+function getFaviconUrl(domain: string): string {
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+}
+
+// Get colors based on outcome type
+function getOutcomeColors(outcome: AccessAttempt['outcome']): {
+  bg: string;
+  text: string;
+  subtext: string;
+} {
+  switch (outcome) {
+    case 'approved':
+      // Red - time spent on distraction
+      return {
+        bg: 'bg-red-100 dark:bg-red-950/50',
+        text: 'text-red-900 dark:text-red-200',
+        subtext: 'text-red-700 dark:text-red-300',
+      };
+    case 'rejected':
+      // Green - AI stopped you
+      return {
+        bg: 'bg-emerald-100 dark:bg-emerald-950/50',
+        text: 'text-emerald-900 dark:text-emerald-200',
+        subtext: 'text-emerald-700 dark:text-emerald-300',
+      };
+    case 'blocked':
+      // Green - you stopped yourself (best outcome!)
+      return {
+        bg: 'bg-emerald-100 dark:bg-emerald-950/50',
+        text: 'text-emerald-900 dark:text-emerald-200',
+        subtext: 'text-emerald-700 dark:text-emerald-300',
+      };
+    case 'reminder':
+      // Blue - saved for later
+      return {
+        bg: 'bg-blue-100 dark:bg-blue-950/50',
+        text: 'text-blue-900 dark:text-blue-200',
+        subtext: 'text-blue-700 dark:text-blue-300',
+      };
+    case 'abandoned':
+      // Amber - started but gave up
+      return {
+        bg: 'bg-amber-100 dark:bg-amber-950/50',
+        text: 'text-amber-900 dark:text-amber-200',
+        subtext: 'text-amber-700 dark:text-amber-300',
+      };
+    default:
+      return {
+        bg: 'bg-muted/50',
+        text: 'text-foreground',
+        subtext: 'text-muted-foreground',
+      };
+  }
+}
+
 // Group access history by day
 function groupHistoryByDay(
   history: AccessAttempt[]
@@ -72,42 +128,43 @@ export default function AccessHistoryPanel({
                 {dayLabel}
               </h4>
               <div className="space-y-2">
-                {attempts.map((attempt) => (
-                  <div
-                    key={attempt.id}
-                    className="flex items-start gap-3 p-2 rounded-lg bg-muted/50 text-sm"
-                  >
-                    <span className="text-lg">
-                      {attempt.outcome === 'approved'
-                        ? '✅'
-                        : attempt.outcome === 'rejected'
-                        ? '❌'
-                        : attempt.outcome === 'reminder'
-                        ? '📝'
-                        : attempt.outcome === 'blocked'
-                        ? '🛡️'
-                        : '🚪'}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="font-medium truncate">
-                          {attempt.domain}
+                {attempts.map((attempt) => {
+                  const colors = getOutcomeColors(attempt.outcome);
+                  return (
+                    <div
+                      key={attempt.id}
+                      className={`flex items-start gap-3 p-2 rounded-lg text-sm ${colors.bg}`}
+                    >
+                      <img
+                        src={getFaviconUrl(attempt.domain)}
+                        alt=""
+                        className="w-5 h-5 mt-0.5 rounded-sm"
+                        onError={(e) => {
+                          // Hide broken images
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className={`font-medium truncate ${colors.text}`}>
+                            {attempt.domain}
+                          </div>
+                          <div className={`text-xs whitespace-nowrap ${colors.subtext}`}>
+                            {formatHistoryTime(attempt.timestamp)}
+                          </div>
                         </div>
-                        <div className="text-muted-foreground text-xs whitespace-nowrap">
-                          {formatHistoryTime(attempt.timestamp)}
+                        <div className={`text-xs ${colors.text}`}>
+                          {capitalizeFirst(attempt.reason)}
                         </div>
+                        {attempt.aiMessage && (
+                          <div className={`text-xs mt-1 italic ${colors.subtext}`}>
+                            {parseMarkdown(attempt.aiMessage)}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-foreground text-xs">
-                        {capitalizeFirst(attempt.reason)}
-                      </div>
-                      {attempt.aiMessage && (
-                        <div className="text-muted-foreground text-xs mt-1 italic">
-                          {parseMarkdown(attempt.aiMessage)}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
