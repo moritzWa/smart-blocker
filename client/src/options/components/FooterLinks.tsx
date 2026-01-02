@@ -6,6 +6,7 @@ interface FooterLinksProps {
   onReviewClick: () => void;
   onToggleImport: () => void;
   onSeedTodos?: () => void;
+  onSeedAccessHistory?: () => void;
 }
 
 export default function FooterLinks({
@@ -14,6 +15,7 @@ export default function FooterLinks({
   onReviewClick,
   onToggleImport,
   onSeedTodos,
+  onSeedAccessHistory,
 }: FooterLinksProps) {
   return (
     <div className="flex gap-4 justify-center text-center flex-wrap mt-6">
@@ -70,6 +72,16 @@ export default function FooterLinks({
           onClick={onSeedTodos}
         >
           Seed Todos
+        </Button>
+      )}
+      {import.meta.env.DEV && onSeedAccessHistory && (
+        <Button
+          variant="link"
+          size="sm"
+          className="cursor-pointer text-muted-foreground"
+          onClick={onSeedAccessHistory}
+        >
+          Seed History
         </Button>
       )}
     </div>

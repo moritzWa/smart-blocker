@@ -32,7 +32,7 @@ interface AccessAttempt {
   domain: string;
   reason: string;
   timestamp: number;
-  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned';
+  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned' | 'blocked';
   durationSeconds?: number;
   aiMessage?: string;
 }

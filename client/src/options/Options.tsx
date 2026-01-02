@@ -276,6 +276,185 @@ export default function Options() {
     setTimeout(() => setStatus(''), 2000);
   }
 
+  async function handleSeedAccessHistory() {
+    const now = Date.now();
+    const MINUTE = 60 * 1000;
+    const HOUR = 60 * MINUTE;
+
+    const exampleHistory: AccessAttempt[] = [
+      // Today - recent attempts
+      {
+        id: `seed-${now}-1`,
+        domain: 'youtube.com',
+        reason: 'Watch the new Fireship video on Bun 2.0',
+        timestamp: now - 15 * MINUTE,
+        outcome: 'approved',
+        durationSeconds: 600,
+        aiMessage:
+          'Tech tutorial - sounds specific. **10 minutes** should cover it.',
+      },
+      {
+        id: `seed-${now}-2`,
+        domain: 'x.com',
+        reason: 'just bored',
+        timestamp: now - 45 * MINUTE,
+        outcome: 'rejected',
+        aiMessage: "Boredom isn't a task. Maybe take a **walk** instead?",
+      },
+      {
+        id: `seed-${now}-3`,
+        domain: 'reddit.com',
+        reason: 'check r/reactjs for solution to hydration error',
+        timestamp: now - 2 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 300,
+        aiMessage:
+          "Debugging help - that's legit. **5 minutes** to find your answer.",
+      },
+      {
+        id: `seed-${now}-4`,
+        domain: 'instagram.com',
+        reason: 'friend sent me something',
+        timestamp: now - 3 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 60,
+        aiMessage:
+          'Quick check of shared content. **1 minute** should be enough.',
+      },
+      {
+        id: `seed-${now}-5`,
+        domain: 'linkedin.com',
+        reason: 'reply to recruiter message',
+        timestamp: now - 4 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 180,
+        aiMessage: 'Professional networking - go ahead. **3 minutes**.',
+      },
+      // Yesterday
+      {
+        id: `seed-${now}-6`,
+        domain: 'twitter.com',
+        reason: 'idk',
+        timestamp: now - 26 * HOUR,
+        outcome: 'rejected',
+        aiMessage:
+          "If you can't say what you need, you probably don't need it.",
+      },
+      {
+        id: `seed-${now}-7`,
+        domain: 'youtube.com',
+        reason: 'background music while working',
+        timestamp: now - 28 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 3600,
+        aiMessage: 'Music for focus - **1 hour** of lo-fi beats coming up.',
+      },
+      {
+        id: `seed-${now}-8`,
+        domain: 'reddit.com',
+        reason: 'want to browse',
+        timestamp: now - 30 * HOUR,
+        outcome: 'rejected',
+        aiMessage: "Browsing isn't a task. What specifically do you need?",
+      },
+      {
+        id: `seed-${now}-9`,
+        domain: 'facebook.com',
+        reason: 'check event details for Saturday',
+        timestamp: now - 32 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 120,
+        aiMessage: 'Event planning - **2 minutes** to get the details.',
+      },
+      {
+        id: `seed-${now}-10`,
+        domain: 'tiktok.com',
+        reason: 'take a break',
+        timestamp: now - 34 * HOUR,
+        outcome: 'rejected',
+        aiMessage:
+          'TikTok breaks have a way of becoming hours. Try a **real break** instead.',
+      },
+      // Two days ago
+      {
+        id: `seed-${now}-11`,
+        domain: 'x.com',
+        reason: 'DM coworker about standup time',
+        timestamp: now - 50 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 60,
+        aiMessage: 'Quick work message. **1 minute**.',
+      },
+      {
+        id: `seed-${now}-12`,
+        domain: 'youtube.com',
+        reason: 'learn about Next.js app router',
+        timestamp: now - 52 * HOUR,
+        outcome: 'reminder',
+        aiMessage:
+          'Added to your **todo list** - watch when you have dedicated learning time.',
+      },
+      {
+        id: `seed-${now}-13`,
+        domain: 'instagram.com',
+        reason: 'post story',
+        timestamp: now - 54 * HOUR,
+        outcome: 'abandoned',
+        aiMessage: 'What story are you posting? Is this time-sensitive?',
+      },
+      {
+        id: `seed-${now}-14`,
+        domain: 'reddit.com',
+        reason: 'research mechanical keyboards',
+        timestamp: now - 56 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 900,
+        aiMessage: 'Shopping research - **15 minutes** to compare options.',
+      },
+      {
+        id: `seed-${now}-15`,
+        domain: 'linkedin.com',
+        reason: 'update job status',
+        timestamp: now - 58 * HOUR,
+        outcome: 'approved',
+        durationSeconds: 300,
+        aiMessage: 'Profile update - **5 minutes**.',
+      },
+      // Blocked - user saw page and left without trying
+      {
+        id: `seed-${now}-16`,
+        domain: 'youtube.com',
+        reason: 'no interaction!',
+        timestamp: now - 5 * HOUR,
+        outcome: 'blocked',
+      },
+      {
+        id: `seed-${now}-17`,
+        domain: 'x.com',
+        reason: 'no interaction!',
+        timestamp: now - 8 * HOUR,
+        outcome: 'blocked',
+      },
+      {
+        id: `seed-${now}-18`,
+        domain: 'tiktok.com',
+        reason: 'no interaction!',
+        timestamp: now - 48 * HOUR,
+        outcome: 'blocked',
+      },
+    ];
+
+    const result = await chrome.storage.local.get({ accessHistory: [] });
+    const existingHistory = result.accessHistory as AccessAttempt[];
+    const mergedHistory = [...exampleHistory, ...existingHistory];
+
+    await chrome.storage.local.set({ accessHistory: mergedHistory });
+    loadAccessHistory();
+
+    setStatus('Seeded 18 example history items!');
+    setTimeout(() => setStatus(''), 2000);
+  }
+
   function formatDisplayUrl(url: string): string {
     try {
       const urlObj = new URL(url);
@@ -344,7 +523,7 @@ export default function Options() {
               className="w-12 h-12"
             />
             <h1 className="text-3xl font-bold text-foreground">
-              Focus Shield Settings
+              Focus Shield Home
             </h1>
           </div>
 
@@ -414,7 +593,7 @@ export default function Options() {
 
             {/* History in single-column layout (hidden on wide screens) */}
             {showHistory && (
-              <div className="min-[900px]:hidden min-w-[400px]">
+              <div className="min-[900px]:hidden min-w-[500px]">
                 <AccessHistoryPanel accessHistory={accessHistory} />
               </div>
             )}
@@ -422,7 +601,7 @@ export default function Options() {
 
           {/* Right column - Access History (visible on wide screens when shown) */}
           {showHistory && (
-            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:min-w-[300px]">
+            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:min-w-[500px]">
               <AccessHistoryPanel accessHistory={accessHistory} />
             </div>
           )}
@@ -435,6 +614,7 @@ export default function Options() {
         onReviewClick={handleReviewClick}
         onToggleImport={() => setShowImport(!showImport)}
         onSeedTodos={handleSeedTodos}
+        onSeedAccessHistory={handleSeedAccessHistory}
       />
     </div>
   );

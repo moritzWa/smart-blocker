@@ -1,6 +1,13 @@
 import { checkIfBlocked, normalizeUrl } from './utils/blocking';
 import { validateUnblockReason } from './services/ai-validation';
-import { unblockSite, addTodoReminder, removeTodoReminder, updateTodoReminder, saveAccessAttempt, getAccessHistory } from './services/storage';
+import {
+  unblockSite,
+  addTodoReminder,
+  removeTodoReminder,
+  updateTodoReminder,
+  saveAccessAttempt,
+  getAccessHistory,
+} from './services/storage';
 
 console.log('Focus Shield service worker loaded');
 
@@ -22,20 +29,15 @@ const activeBlockedSessions = new Map<number, BlockedSession>();
 // Save session to history when resolved or abandoned
 async function saveSessionToHistory(
   session: BlockedSession,
-  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned',
+  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned' | 'blocked',
   durationSeconds?: number
 ) {
-  // Only save if there was at least one user message
   const userMessages = session.conversationHistory
-    .filter(m => m.role === 'user')
-    .map(m => m.content);
+    .filter((m) => m.role === 'user')
+    .map((m) => m.content);
 
-  if (userMessages.length === 0) {
-    console.log(`📝 No user messages for ${session.domain}, skipping history save`);
-    return;
-  }
-
-  const combinedReason = userMessages.join(', ');
+  const combinedReason =
+    userMessages.length > 0 ? userMessages.join(', ') : 'no interaction!';
 
   await saveAccessAttempt({
     domain: session.domain,
@@ -46,15 +48,24 @@ async function saveSessionToHistory(
     aiMessage: session.lastAiMessage,
   });
 
-  console.log(`📝 Saved ${outcome} session for ${session.domain}: "${combinedReason}"`);
+  console.log(
+    `📝 Saved ${outcome} session for ${session.domain}: "${combinedReason}"`
+  );
 }
 
-// Listen for tab close to save abandoned sessions
+// Listen for tab close to save blocked/abandoned sessions
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   const session = activeBlockedSessions.get(tabId);
   if (session) {
-    console.log(`🚪 Tab ${tabId} closed with active session for ${session.domain}`);
-    await saveSessionToHistory(session, 'abandoned');
+    // 'blocked' = saw page but didn't interact, 'abandoned' = started conversation but gave up
+    const hasInteraction = session.conversationHistory.some(
+      (m) => m.role === 'user'
+    );
+    const outcome = hasInteraction ? 'abandoned' : 'blocked';
+    console.log(
+      `🚪 Tab ${tabId} closed with active session for ${session.domain} (${outcome})`
+    );
+    await saveSessionToHistory(session, outcome);
     activeBlockedSessions.delete(tabId);
   }
 });
@@ -64,11 +75,13 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 // ============================================
 
 // Fetch site metadata (title, description) from URL
-async function fetchSiteMetadata(url: string): Promise<{ title: string; description: string } | null> {
+async function fetchSiteMetadata(
+  url: string
+): Promise<{ title: string; description: string } | null> {
   try {
     const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Accept': 'text/html' },
+      headers: { Accept: 'text/html' },
     });
 
     if (!response.ok) return null;
@@ -80,8 +93,13 @@ async function fetchSiteMetadata(url: string): Promise<{ title: string; descript
     const title = titleMatch ? titleMatch[1].trim() : '';
 
     // Parse meta description
-    const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
-                      html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+    const descMatch =
+      html.match(
+        /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i
+      ) ||
+      html.match(
+        /<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i
+      );
     const description = descMatch ? descMatch[1].trim() : '';
 
     console.log(`📄 Fetched metadata for ${url}:`, { title, description });
@@ -93,7 +111,10 @@ async function fetchSiteMetadata(url: string): Promise<{ title: string; descript
 }
 
 // Store metadata for a blocked URL
-const siteMetadataCache = new Map<string, { title: string; description: string }>();
+const siteMetadataCache = new Map<
+  string,
+  { title: string; description: string }
+>();
 
 // Badge update interval ID
 let badgeUpdateInterval: number | null = null;
@@ -120,9 +141,11 @@ async function updateBadgeForActiveTab() {
   }
 
   // Skip chrome:// URLs and extension pages
-  if (tab.url.startsWith('chrome://') ||
-      tab.url.startsWith('chrome-extension://') ||
-      tab.url.includes('blocked.html')) {
+  if (
+    tab.url.startsWith('chrome://') ||
+    tab.url.startsWith('chrome-extension://') ||
+    tab.url.includes('blocked.html')
+  ) {
     chrome.action.setBadgeText({ text: '' });
     return;
   }
@@ -179,7 +202,9 @@ async function hasActiveUnblocks(): Promise<boolean> {
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
   const now = Date.now();
 
-  return Object.values(temporaryUnblocks).some(expiryTime => expiryTime > now);
+  return Object.values(temporaryUnblocks).some(
+    (expiryTime) => expiryTime > now
+  );
 }
 
 // Function to update the extension icon based on strict mode
@@ -193,8 +218,8 @@ async function updateExtensionIcon() {
         16: '/images/strict-mode/icon16.png',
         32: '/images/strict-mode/icon32.png',
         48: '/images/strict-mode/icon48.png',
-        128: '/images/strict-mode/icon128.png'
-      }
+        128: '/images/strict-mode/icon128.png',
+      },
     });
   } else {
     // Use default icons
@@ -203,8 +228,8 @@ async function updateExtensionIcon() {
         16: '/images/icon16.png',
         32: '/images/icon32.png',
         48: '/images/icon48.png',
-        128: '/images/icon128.png'
-      }
+        128: '/images/icon128.png',
+      },
     });
   }
 }
@@ -215,7 +240,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     await initializeDefaultSites();
 
     // Open onboarding page on first install
-    const onboardingUrl = chrome.runtime.getURL('src/onboarding/onboarding.html');
+    const onboardingUrl = chrome.runtime.getURL(
+      'src/onboarding/onboarding.html'
+    );
     chrome.tabs.create({ url: onboardingUrl });
   }
 
@@ -228,7 +255,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // Also check on startup in case storage was cleared
 chrome.runtime.onStartup.addListener(async () => {
-  const result = await chrome.storage.sync.get(['allowedSites', 'blockedSites']);
+  const result = await chrome.storage.sync.get([
+    'allowedSites',
+    'blockedSites',
+  ]);
   if (!result.allowedSites && !result.blockedSites) {
     await initializeDefaultSites();
   }
@@ -288,28 +318,35 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   // Only check when URL actually changes
   if (changeInfo.url && tab.url) {
     // Skip chrome:// URLs and extension pages
-    if (tab.url.startsWith('chrome://') ||
-        tab.url.startsWith('chrome-extension://') ||
-        tab.url.includes('blocked.html')) {
+    if (
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://') ||
+      tab.url.includes('blocked.html')
+    ) {
       return;
     }
 
     const result = await checkIfBlocked(tab.url);
     if (result.blocked) {
       // Fetch metadata in background (don't block the redirect)
-      fetchSiteMetadata(tab.url).then(metadata => {
+      fetchSiteMetadata(tab.url).then((metadata) => {
         if (metadata) {
           siteMetadataCache.set(tab.url!, metadata);
         }
       });
 
-      const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
-        '?url=' + encodeURIComponent(tab.url);
+      const blockPageUrl =
+        chrome.runtime.getURL('src/blocked/blocked.html') +
+        '?url=' +
+        encodeURIComponent(tab.url);
       chrome.tabs.update(tabId, { url: blockPageUrl });
     }
 
     // Update badge if this is the active tab
-    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [activeTab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
     if (activeTab?.id === tabId) {
       updateBadgeForActiveTab();
     }
@@ -321,16 +358,20 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
   const tab = await chrome.tabs.get(activeInfo.tabId);
   if (tab.url) {
     // Skip chrome:// URLs and extension pages
-    if (tab.url.startsWith('chrome://') ||
-        tab.url.startsWith('chrome-extension://') ||
-        tab.url.includes('blocked.html')) {
+    if (
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://') ||
+      tab.url.includes('blocked.html')
+    ) {
       return;
     }
 
     const result = await checkIfBlocked(tab.url);
     if (result.blocked) {
-      const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
-        '?url=' + encodeURIComponent(tab.url);
+      const blockPageUrl =
+        chrome.runtime.getURL('src/blocked/blocked.html') +
+        '?url=' +
+        encodeURIComponent(tab.url);
       chrome.tabs.update(activeInfo.tabId, { url: blockPageUrl });
     }
   }
@@ -362,7 +403,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'VALIDATE_REASON') {
-    validateUnblockReason(message.hostname, message.reason, message.conversationHistory || [], message.siteMetadata, message.accessHistory).then(sendResponse);
+    validateUnblockReason(
+      message.hostname,
+      message.reason,
+      message.conversationHistory || [],
+      message.siteMetadata,
+      message.accessHistory
+    ).then(sendResponse);
     return true;
   }
 
@@ -372,7 +419,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (cached) {
       sendResponse(cached);
     } else {
-      fetchSiteMetadata(message.url).then(metadata => {
+      fetchSiteMetadata(message.url).then((metadata) => {
         if (metadata) {
           siteMetadataCache.set(message.url, metadata);
         }
@@ -383,12 +430,16 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.type === 'SAVE_ACCESS_ATTEMPT') {
-    saveAccessAttempt(message.attempt).then(() => sendResponse({ success: true }));
+    saveAccessAttempt(message.attempt).then(() =>
+      sendResponse({ success: true })
+    );
     return true;
   }
 
   if (message.type === 'GET_ACCESS_HISTORY') {
-    getAccessHistory(message.domain, message.hoursBack || 24).then(sendResponse);
+    getAccessHistory(message.domain, message.hoursBack || 24).then(
+      sendResponse
+    );
     return true;
   }
 
@@ -435,7 +486,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (session) {
       session.conversationHistory = conversationHistory;
       session.lastAiMessage = lastAiMessage;
-      console.log(`📝 Updated session for tab ${tabId}: ${conversationHistory.length} messages`);
+      console.log(
+        `📝 Updated session for tab ${tabId}: ${conversationHistory.length} messages`
+      );
     }
     sendResponse({ success: true });
     return true;
@@ -474,8 +527,10 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         const tabDomain = normalizeUrl(tab.url);
         if (tabDomain === domain) {
           // Redirect to blocked page
-          const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
-            '?url=' + encodeURIComponent(tab.url);
+          const blockPageUrl =
+            chrome.runtime.getURL('src/blocked/blocked.html') +
+            '?url=' +
+            encodeURIComponent(tab.url);
           chrome.tabs.update(tab.id, { url: blockPageUrl });
           console.log(`🚫 Re-blocked tab ${tab.id} for ${domain}`);
         }
@@ -499,8 +554,11 @@ async function checkAllOpenTabs(): Promise<{ success: boolean }> {
   for (const tab of tabs) {
     if (tab.id && tab.url) {
       // Skip chrome:// and chrome-extension:// URLs (except blocked.html which we handle below)
-      if (tab.url.startsWith('chrome://') ||
-          (tab.url.startsWith('chrome-extension://') && !tab.url.includes('blocked.html'))) {
+      if (
+        tab.url.startsWith('chrome://') ||
+        (tab.url.startsWith('chrome-extension://') &&
+          !tab.url.includes('blocked.html'))
+      ) {
         continue;
       }
 
@@ -526,8 +584,10 @@ async function checkAllOpenTabs(): Promise<{ success: boolean }> {
       // Handle normal tabs - block if needed
       const result = await checkIfBlocked(tab.url);
       if (result.blocked) {
-        const blockPageUrl = chrome.runtime.getURL('src/blocked/blocked.html') +
-          '?url=' + encodeURIComponent(tab.url);
+        const blockPageUrl =
+          chrome.runtime.getURL('src/blocked/blocked.html') +
+          '?url=' +
+          encodeURIComponent(tab.url);
         chrome.tabs.update(tab.id, { url: blockPageUrl });
       }
     }
