@@ -74,17 +74,24 @@ WHEN TO APPROVE IMMEDIATELY:
 - Task is specific AND clearly requires this site
 - Example: "Reply to John's DM about project deadline" → approve
 - Example: "Send apartment lease to roommate" → approve
-- Shared content: "friend/someone sent me this" → allow brief check (30-60s), user may not know what's in it yet
+
+SHARED CONTENT (SPECIAL CASE - APPROVE FAST):
+- Patterns: "someone sent me", "friend shared", "check this link", "see what X posted"
+- User often doesn't know what's in it yet - that's OK!
+- "I don't know" / "not sure" is VALID here (they haven't seen it!)
+- APPROVE with **10-45 seconds** - just enough to view, not browse
+- Do NOT ask what's in the content - they're trying to find out!
+- Example: "watch tweet someone sent" → approve 45s immediately
 
 WHEN TO ASK FOLLOW-UP:
 - Vague task: "message friend" → what about?
 - Platform unclear: "send a file" → why not email/iMessage?
 - Could wait: "check something" → is this urgent?
+- NOT for shared content - approve those quickly!
 
 WHEN TO REJECT:
 - Pure entertainment: "bored", "just want to scroll", "take a break"
-- Non-answers: "not sure", "idk", "umm", "don't know" → reject immediately (real tasks can be articulated)
-  - EXCEPTION: If someone shared content with them, "I don't know" is valid—they haven't seen it yet!
+- Non-answers: "not sure", "idk" → reject (UNLESS it's shared content - see above)
 - User can't give specific task after 1 follow-up
 - BUT: If user appeals with compelling new context, reconsider!
 
@@ -122,11 +129,17 @@ IMPORTANT: "seconds" must be a plain integer (e.g., 900), NOT an expression (e.g
     }
   }
   if (accessHistory && accessHistory.length > 0) {
-    const historyStr = accessHistory.slice(0, 10).map(a => {
-      const timeAgo = Math.round((Date.now() - a.timestamp) / 60000);
-      const timeStr = timeAgo < 60 ? `${timeAgo}m ago` : `${Math.round(timeAgo / 60)}h ago`;
-      return `- ${timeStr}: "${a.reason}" → ${a.outcome}${a.durationSeconds ? ` (${a.durationSeconds}s)` : ''}`;
-    }).join('\n');
+    const historyStr = accessHistory
+      .slice(0, 10)
+      .map((a) => {
+        const timeAgo = Math.round((Date.now() - a.timestamp) / 60000);
+        const timeStr =
+          timeAgo < 60 ? `${timeAgo}m ago` : `${Math.round(timeAgo / 60)}h ago`;
+        return `- ${timeStr}: "${a.reason}" → ${a.outcome}${
+          a.durationSeconds ? ` (${a.durationSeconds}s)` : ''
+        }`;
+      })
+      .join('\n');
     userContent += `\n\nRecent history for this site (last 24h):\n${historyStr}`;
   }
   userMessages.push({
@@ -164,8 +177,13 @@ Deno.serve({ port: 8000 }, async (req) => {
 
   if (req.method === 'POST' && new URL(req.url).pathname === '/validate') {
     try {
-      const { reason, hostname, conversationHistory, siteMetadata, accessHistory } =
-        await req.json();
+      const {
+        reason,
+        hostname,
+        conversationHistory,
+        siteMetadata,
+        accessHistory,
+      } = await req.json();
 
       if (!reason || !hostname) {
         return new Response(
@@ -184,11 +202,16 @@ Deno.serve({ port: 8000 }, async (req) => {
       // - Local dev: always use v2
       // - Production: use v2 if request has new fields OR if past cutoff date
       // - Otherwise: use legacy API for old clients
-      const isV2Request = siteMetadata !== undefined || accessHistory !== undefined;
+      const isV2Request =
+        siteMetadata !== undefined || accessHistory !== undefined;
       const isPastCutoff = new Date() >= V2_CUTOFF_DATE;
       const useV2 = IS_LOCAL_DEV || isV2Request || isPastCutoff;
 
-      console.log(`📡 Using ${useV2 ? 'v2' : 'legacy'} API for ${hostname} (dev=${IS_LOCAL_DEV})`);
+      console.log(
+        `📡 Using ${
+          useV2 ? 'v2' : 'legacy'
+        } API for ${hostname} (dev=${IS_LOCAL_DEV})`
+      );
 
       const result = useV2
         ? await validateUnblockReason(
