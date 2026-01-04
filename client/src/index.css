@@ -35,6 +35,7 @@
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
     --pulse-purple-color: oklch(0.97 0.05 300);
+    --pulse-purple-intense-color: oklch(0.90 0.12 300);
   }
 
   .dark {
@@ -70,6 +71,7 @@
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
     --pulse-purple-color: oklch(0.25 0.08 300 / 0.3);
+    --pulse-purple-intense-color: oklch(0.35 0.15 300 / 0.5);
   }
 }
 
@@ -106,5 +108,18 @@
 
 .animate-pulse-purple {
   animation: pulse-purple 2s ease-in-out infinite;
+}
+
+@keyframes pulse-purple-intense {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: var(--pulse-purple-intense-color);
+  }
+}
+
+.animate-pulse-purple-intense {
+  animation: pulse-purple-intense 1.5s ease-in-out infinite;
 }
 

@@ -40,6 +40,18 @@ export default function TodoRemindersList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNote, setEditNote] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const [, forceUpdate] = useState(0);
+
+  // Re-render after 3s to clear "new item" highlights
+  useEffect(() => {
+    const hasNewItems = todoReminders.some(
+      (r) => Date.now() - r.timestamp < 3000
+    );
+    if (hasNewItems) {
+      const timer = setTimeout(() => forceUpdate((n) => n + 1), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [todoReminders]);
 
   // Scroll to and highlight on first reminder creation
   useEffect(() => {
@@ -130,10 +142,14 @@ export default function TodoRemindersList({
             const displayUrl = formatDisplayUrl(reminder.url);
             const isEditing = editingId === reminder.id;
 
+            const isNew = Date.now() - reminder.timestamp < 3000;
+
             return (
               <div
                 key={reminder.id}
-                className="flex items-center gap-3 group hover:bg-muted px-2 py-1.5 rounded-sm transition-colors"
+                className={`flex items-center gap-3 group hover:bg-muted px-2 py-1.5 rounded-sm transition-colors ${
+                  isNew ? 'animate-pulse-purple-intense' : ''
+                }`}
               >
                 {isEditing ? (
                   <div className="flex-1 min-w-0 flex items-center gap-2">
