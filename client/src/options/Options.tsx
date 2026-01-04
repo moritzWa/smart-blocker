@@ -542,7 +542,7 @@ export default function Options() {
 
   return (
     <div className="min-h-screen bg-background py-10">
-      <div className="max-w-6xl mx-auto px-8">
+      <div className="max-w-7xl mx-auto px-8">
         {/* Header */}
         <div className="flex justify-between items-end gap-4 mb-6">
           <div className="flex flex-row items-center gap-4">
