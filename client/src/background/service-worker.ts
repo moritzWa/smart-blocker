@@ -8,6 +8,7 @@ import {
   saveAccessAttempt,
   getAccessHistory,
 } from './services/storage';
+import type { AccessAttemptOutcome } from '../options/types';
 
 console.log('Focus Shield service worker loaded');
 
@@ -29,15 +30,21 @@ const activeBlockedSessions = new Map<number, BlockedSession>();
 // Save session to history when resolved or abandoned
 async function saveSessionToHistory(
   session: BlockedSession,
-  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned' | 'blocked',
+  outcome: AccessAttemptOutcome,
   durationSeconds?: number
 ) {
   const userMessages = session.conversationHistory
     .filter((m) => m.role === 'user')
     .map((m) => m.content);
 
+  const getDefaultReason = (): string => {
+    if (outcome === 'reminder') return 'Reminder created';
+    if (outcome === 'blocked') return 'Saw block page, left';
+    return 'No interaction';
+  };
+
   const combinedReason =
-    userMessages.length > 0 ? userMessages.join(', ') : 'no interaction!';
+    userMessages.length > 0 ? userMessages.join(', ') : getDefaultReason();
 
   await saveAccessAttempt({
     domain: session.domain,

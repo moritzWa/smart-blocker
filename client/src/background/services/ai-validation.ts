@@ -1,3 +1,5 @@
+import type { AccessAttemptOutcome } from '../../options/types';
+
 export interface AIResponse {
   valid: boolean | null; // null = follow-up needed
   seconds: number;
@@ -19,7 +21,7 @@ export interface AccessAttempt {
   domain: string;
   reason: string;
   timestamp: number;
-  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned';
+  outcome: AccessAttemptOutcome;
   durationSeconds?: number;
 }
 

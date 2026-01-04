@@ -11,12 +11,19 @@ export interface TodoReminder {
   timestamp: number;
 }
 
+export type AccessAttemptOutcome =
+  | 'approved'
+  | 'rejected'
+  | 'reminder'
+  | 'abandoned'
+  | 'blocked';
+
 export interface AccessAttempt {
   id: string;
   domain: string;
   reason: string;
   timestamp: number;
-  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned' | 'blocked';
+  outcome: AccessAttemptOutcome;
   durationSeconds?: number;
   aiMessage?: string;
 }

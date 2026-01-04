@@ -9,6 +9,7 @@ import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 import { useReviewRequest } from './hooks/useReviewRequest';
 import { shouldShowReview, formatTime, parseMarkdown } from './utils';
 import { FORM_WIDTH } from './constants';
+import type { AccessAttempt } from '../options/types';
 
 interface AIResponse {
   valid: boolean | null;
@@ -25,16 +26,6 @@ interface ConversationMessage {
 interface SiteMetadata {
   title: string;
   description: string;
-}
-
-interface AccessAttempt {
-  id: string;
-  domain: string;
-  reason: string;
-  timestamp: number;
-  outcome: 'approved' | 'rejected' | 'reminder' | 'abandoned' | 'blocked';
-  durationSeconds?: number;
-  aiMessage?: string;
 }
 
 export default function BlockedPage() {
