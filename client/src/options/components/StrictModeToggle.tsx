@@ -13,9 +13,9 @@ export default function StrictModeToggle({
     <section className="p-4 rounded-lg border bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-emerald-900 dark:text-emerald-100 mb-1">
+          <h4 className="text-base font-semibold text-emerald-900 dark:text-emerald-100 mb-0.5">
             Strict Mode
-          </h3>
+          </h4>
           <p className="text-sm text-emerald-700 dark:text-emerald-300">
             Block all sites except those in the always allowed list
           </p>

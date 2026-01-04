@@ -463,6 +463,39 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === 'ENABLE_DISTRACTION_MODE') {
+    const DISTRACTION_MODE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+    const expiryTime = Date.now() + DISTRACTION_MODE_DURATION_MS;
+
+    chrome.storage.sync.set({ distractionModeExpiry: expiryTime }).then(() => {
+      // Set alarm to auto-disable
+      chrome.alarms.create('distraction-mode-expiry', {
+        when: expiryTime,
+      });
+
+      // Check all tabs to unblock any todo reminder sites
+      checkAllOpenTabs().then(() => {
+        console.log(`🎯 Distraction mode enabled until ${new Date(expiryTime)}`);
+        sendResponse({ success: true, expiryTime });
+      });
+    });
+    return true;
+  }
+
+  if (message.type === 'DISABLE_DISTRACTION_MODE') {
+    chrome.storage.sync.set({ distractionModeExpiry: null }).then(() => {
+      // Clear the alarm
+      chrome.alarms.clear('distraction-mode-expiry');
+
+      // Check all tabs to re-block sites
+      checkAllOpenTabs().then(() => {
+        console.log('🎯 Distraction mode disabled');
+        sendResponse({ success: true });
+      });
+    });
+    return true;
+  }
+
   // ============================================
   // Blocked Session Management
   // ============================================
@@ -516,6 +549,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 // Listen for alarms - automatically re-block sites when temporary unblock expires
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  // Handle distraction mode expiry
+  if (alarm.name === 'distraction-mode-expiry') {
+    console.log('⏰ Distraction mode expired, re-blocking todo reminder sites...');
+    await chrome.storage.sync.set({ distractionModeExpiry: null });
+    await checkAllOpenTabs();
+    return;
+  }
+
   if (alarm.name.startsWith('unblock-')) {
     const domain = alarm.name.replace('unblock-', '');
     console.log(`⏰ Unblock expired for ${domain}, checking open tabs...`);

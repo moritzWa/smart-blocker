@@ -3,6 +3,7 @@ import { X, Copy, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import DistractionModeButton from './DistractionModeButton';
 
 interface TodoReminder {
   id: string;
@@ -16,9 +17,12 @@ interface TodoRemindersListProps {
   todoReminders: TodoReminder[];
   onRemove: (id: string) => void;
   onEdit: (id: string, note: string) => void;
-  onOpen: (url: string, id: string) => void;
+  onOpen: (url: string) => void;
   onCopy: () => void;
   highlight?: boolean;
+  distractionModeExpiry: number | null;
+  onEnableDistractionMode: () => void;
+  onDisableDistractionMode: () => void;
 }
 
 export default function TodoRemindersList({
@@ -28,6 +32,9 @@ export default function TodoRemindersList({
   onOpen,
   onCopy,
   highlight = false,
+  distractionModeExpiry,
+  onEnableDistractionMode,
+  onDisableDistractionMode,
 }: TodoRemindersListProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -97,8 +104,8 @@ export default function TodoRemindersList({
       ref={sectionRef}
       className={`rounded-xl ${highlight ? 'animate-pulse-purple' : ''}`}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
+      <CardContent className="p-4 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-foreground">
             To-Do Reminders
           </h2>
@@ -112,6 +119,12 @@ export default function TodoRemindersList({
             Copy
           </Button>
         </div>
+        <DistractionModeButton
+          todoRemindersCount={todoReminders.length}
+          distractionModeExpiry={distractionModeExpiry}
+          onEnable={onEnableDistractionMode}
+          onDisable={onDisableDistractionMode}
+        />
         <div className="space-y-2">
           {todoReminders.map((reminder) => {
             const displayUrl = formatDisplayUrl(reminder.url);
@@ -140,7 +153,7 @@ export default function TodoRemindersList({
                   </div>
                 ) : (
                   <div
-                    onClick={() => onOpen(reminder.url, reminder.id)}
+                    onClick={() => onOpen(reminder.url)}
                     className="flex-1 min-w-0 text-left h-auto p-0 hover:bg-transparent group/item cursor-pointer"
                   >
                     <div className="flex items-baseline gap-2 min-w-0">

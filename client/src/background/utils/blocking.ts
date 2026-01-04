@@ -58,12 +58,16 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
     blockedSites: [],
     temporaryUnblocks: {},
     strictMode: false,
+    distractionModeExpiry: null,
+    todoReminders: [],
   });
 
   const allowedSites = result.allowedSites as string[];
   const blockedSites = result.blockedSites as string[];
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
   const strictMode = result.strictMode as boolean;
+  const distractionModeExpiry = result.distractionModeExpiry as number | null;
+  const todoReminders = result.todoReminders as Array<{ hostname: string }>;
 
   console.log('🔍 Checking:', domain, { strictMode, allowedSites, blockedSites });
 
@@ -79,6 +83,19 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
       // Expired, clean up
       delete temporaryUnblocks[domain];
       chrome.storage.sync.set({ temporaryUnblocks });
+    }
+  }
+
+  // Check if distraction mode is active and domain is in todo reminders
+  if (distractionModeExpiry && Date.now() < distractionModeExpiry) {
+    const isTodoReminderDomain = todoReminders.some(
+      (reminder) => matchesDomain(domain, reminder.hostname)
+    );
+    if (isTodoReminderDomain) {
+      console.log(
+        `🎯 Distraction mode: allowing todo reminder domain ${domain}`
+      );
+      return { blocked: false };
     }
   }
 

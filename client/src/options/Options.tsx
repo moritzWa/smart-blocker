@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import TodoRemindersList from './components/TodoRemindersList';
 import UnblockedSitesList from './components/UnblockedSitesList';
 import StrictModeToggle from './components/StrictModeToggle';
+import DistractionModeButton from './components/DistractionModeButton';
 import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
 import AccessHistoryPanel from './components/AccessHistoryPanel';
 import FooterLinks from './components/FooterLinks';
 import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import type { UnblockedSite, TodoReminder, AccessAttempt } from './types';
 import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
@@ -53,6 +55,9 @@ export default function Options() {
   const [highlightTodos, setHighlightTodos] = useState(false);
   const [showHistory, setShowHistory] = useState(true);
   const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
+  const [distractionModeExpiry, setDistractionModeExpiry] = useState<
+    number | null
+  >(null);
 
   // Update favicon based on strict mode
   useFaviconStrictMode(strictMode);
@@ -62,6 +67,7 @@ export default function Options() {
     loadUnblockedSites();
     loadTodoReminders();
     loadAccessHistory();
+    loadDistractionMode();
 
     // Listen for storage changes and update immediately
     const handleStorageChange = (
@@ -74,6 +80,9 @@ export default function Options() {
         }
         if (changes.todoReminders) {
           loadTodoReminders();
+        }
+        if (changes.distractionModeExpiry) {
+          loadDistractionMode();
         }
       }
       if (namespace === 'local' && changes.accessHistory) {
@@ -181,6 +190,30 @@ export default function Options() {
     setTodoReminders(result.todoReminders);
   }
 
+  async function loadDistractionMode() {
+    const result = await chrome.storage.sync.get({
+      distractionModeExpiry: null,
+    });
+    const expiry = result.distractionModeExpiry as number | null;
+
+    // Check if expired
+    if (expiry && expiry > Date.now()) {
+      setDistractionModeExpiry(expiry);
+    } else {
+      setDistractionModeExpiry(null);
+    }
+  }
+
+  async function handleEnableDistractionMode() {
+    await chrome.runtime.sendMessage({ type: 'ENABLE_DISTRACTION_MODE' });
+    loadDistractionMode();
+  }
+
+  async function handleDisableDistractionMode() {
+    await chrome.runtime.sendMessage({ type: 'DISABLE_DISTRACTION_MODE' });
+    loadDistractionMode();
+  }
+
   async function saveSettings() {
     const allowedSitesList = allowedSites.split('\n').filter((s) => s.trim());
     const blockedSitesList = blockedSites.split('\n').filter((s) => s.trim());
@@ -215,14 +248,9 @@ export default function Options() {
     loadTodoReminders();
   }
 
-  async function handleOpenTodoUrl(url: string, id: string) {
-    // Remove todo reminder and open URL
-    await chrome.runtime.sendMessage({
-      type: 'REMOVE_TODO_REMINDER',
-      id,
-    });
+  function handleOpenTodoUrl(url: string) {
+    // Just open URL - user removes manually with X button when done
     window.open(url, '_blank');
-    loadTodoReminders();
   }
 
   async function handleCopyTodos() {
@@ -554,6 +582,9 @@ export default function Options() {
               onOpen={handleOpenTodoUrl}
               onCopy={handleCopyTodos}
               highlight={highlightTodos}
+              distractionModeExpiry={distractionModeExpiry}
+              onEnableDistractionMode={handleEnableDistractionMode}
+              onDisableDistractionMode={handleDisableDistractionMode}
             />
 
             <UnblockedSitesList
@@ -562,17 +593,25 @@ export default function Options() {
             />
 
             <Card className="p-4 flex flex-col gap-4 rounded-xl">
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-1">
+                  Always Allowed Sites
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  One site per line. These sites will never be blocked.
+                </p>
+              </div>
+
               <StrictModeToggle
                 strictMode={strictMode}
                 onChange={setStrictMode}
               />
 
-              <SiteListInput
-                label="Always Allowed Sites"
-                description="One site per line. These sites will never be blocked."
+              <Textarea
                 value={allowedSites}
-                onChange={setAllowedSites}
-                placeholder="remnote.com&#10;claude.ai&#10;calendar.google.com"
+                onChange={(e) => setAllowedSites(e.target.value)}
+                rows={5}
+                placeholder={'remnote.com\nclaude.ai\ncalendar.google.com'}
               />
             </Card>
 
