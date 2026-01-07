@@ -572,7 +572,9 @@ export default function Options() {
           {/* Left column - Main settings */}
           <div
             className={`flex flex-col gap-6 ${
-              showHistory ? 'w-full max-w-3xl' : 'max-w-3xl mx-auto w-full'
+              showHistory
+                ? 'w-full min-[900px]:flex-1 min-[900px]:w-1/2'
+                : 'max-w-3xl mx-auto w-full'
             }`}
           >
             <TodoRemindersList
@@ -633,7 +635,7 @@ export default function Options() {
 
             {/* History in single-column layout (hidden on wide screens) */}
             {showHistory && (
-              <div className="min-[900px]:hidden min-w-[500px]">
+              <div className="min-[900px]:hidden">
                 <AccessHistoryPanel accessHistory={accessHistory} />
               </div>
             )}
@@ -641,7 +643,7 @@ export default function Options() {
 
           {/* Right column - Access History (visible on wide screens when shown) */}
           {showHistory && (
-            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:min-w-[500px]">
+            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:w-1/2">
               <AccessHistoryPanel accessHistory={accessHistory} />
             </div>
           )}
