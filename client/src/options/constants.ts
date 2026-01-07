@@ -17,6 +17,13 @@ export function createSeedTodos(): TodoReminder[] {
       timestamp: Date.now() - 5400000, // 90 minutes ago
     },
     {
+      id: `seed-${Date.now()}-2`,
+      url: 'https://exa.ai/search?q=great+article+on+how+to+cook+a+good+soup+with+a+nice+bla+bal+bla+bal+bla+bal+bla+bal+bla+bal+bla+bal+bla+bal+bla+bal+bla+bal+etc%3A',
+      hostname: 'x.com',
+      note: 'Soup',
+      timestamp: Date.now() - 5400000, // 90 minutes ago
+    },
+    {
       id: `seed-${Date.now()}-3`,
       url: 'https://www.linkedin.com/feed/',
       hostname: 'linkedin.com',
