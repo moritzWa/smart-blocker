@@ -397,7 +397,7 @@ export default function BlockedPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center font-sans">
-      <div className="text-center max-w-2xl px-10 py-12">
+      <div className="text-center max-w-2xl px-10 py-12 flex flex-col items-center justify-center">
         <img
           src={strictMode ? '/logo-strict-mode.png' : '/logo.png'}
           alt="Focus Shield"
@@ -429,12 +429,10 @@ export default function BlockedPage() {
         </h1>
 
         <p
-          className={`text-2xl mb-5 text-foreground ${FORM_WIDTH} flex justify-center gap-1 text-center`}
+          className={`text-2xl mb-5 text-foreground ${FORM_WIDTH} text-center mx-auto break-words`}
         >
-          <span>{strictMode ? 'Strict Mode' : 'Focus Shield'} Blocked:</span>
-          <span className="text-muted-foreground truncate min-w-0">
-            {displayUrl}
-          </span>
+          {strictMode ? 'Strict Mode' : 'Focus Shield'} Blocked:{' '}
+          <span className="text-muted-foreground">{displayUrl}</span>
         </p>
 
         {showReviewRequest ? (
