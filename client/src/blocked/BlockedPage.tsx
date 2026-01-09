@@ -46,6 +46,9 @@ export default function BlockedPage() {
   const [strictMode, setStrictMode] = useState(false);
   const [todoSaved, setTodoSaved] = useState(false);
   const [tabId, setTabId] = useState<number | null>(null);
+  const [lastApprovedReason, setLastApprovedReason] = useState<string | null>(
+    null
+  );
   const reasonInputRef = useRef<HTMLInputElement>(null);
   const followUpInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,16 +70,32 @@ export default function BlockedPage() {
     // Get blocked URL from query params
     const params = new URLSearchParams(window.location.search);
     const url = params.get('url') || '';
+    const isReblock = params.get('reblock') === 'true';
     setBlockedUrl(url);
 
+    let domain = '';
     try {
       const urlObj = new URL(url);
       // Remove www. prefix and trailing slash for cleaner display
       const hostname = urlObj.hostname.replace(/^www\./, '');
+      domain = hostname;
       const pathname = urlObj.pathname.replace(/\/$/, '');
       setDisplayUrl(hostname + pathname + urlObj.search);
     } catch {
       setDisplayUrl(url);
+    }
+
+    // If this is a reblock, fetch the last approved reason for this domain
+    if (isReblock && domain) {
+      chrome.storage.local.get({ accessHistory: [] }).then((result) => {
+        const history = result.accessHistory as AccessAttempt[];
+        const lastApproved = history.find(
+          (a) => a.domain === domain && a.outcome === 'approved'
+        );
+        if (lastApproved?.reason) {
+          setLastApprovedReason(lastApproved.reason);
+        }
+      });
     }
 
     // Fetch site metadata in background
@@ -385,14 +404,34 @@ export default function BlockedPage() {
           className="w-32 h-32 mx-auto mb-6"
         />
 
-        <h1 className="text-5xl font-bold text-foreground mb-4">
-          {strictMode ? 'Strict Mode' : 'Focus Shield'}
+        <h1 className="text-4xl font-bold text-foreground mb-4">
+          {lastApprovedReason ? (
+            <>
+              <span>Done with that</span>
+              <span className="text-muted-foreground">
+                {' '}
+                "{lastApprovedReason}"
+              </span>
+              <span>?</span>
+            </>
+          ) : (
+            <>
+              <span>Why</span>
+              <span className="text-muted-foreground">
+                {' '}
+                do you want to access this?{' '}
+              </span>
+              <br />
+              <span>Don't lie</span>
+              <span className="text-muted-foreground"> to yourself.</span>
+            </>
+          )}
         </h1>
 
         <p
           className={`text-2xl mb-5 text-foreground ${FORM_WIDTH} flex justify-center gap-1 text-center`}
         >
-          <span>Blocked:</span>
+          <span>{strictMode ? 'Strict Mode' : 'Focus Shield'} Blocked:</span>
           <span className="text-muted-foreground truncate min-w-0">
             {displayUrl}
           </span>

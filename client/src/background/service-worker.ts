@@ -574,11 +574,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       if (tab.id && tab.url) {
         const tabDomain = normalizeUrl(tab.url);
         if (tabDomain === domain) {
-          // Redirect to blocked page
+          // Redirect to blocked page with reblock flag
           const blockPageUrl =
             chrome.runtime.getURL('src/blocked/blocked.html') +
             '?url=' +
-            encodeURIComponent(tab.url);
+            encodeURIComponent(tab.url) +
+            '&reblock=true';
           chrome.tabs.update(tab.id, { url: blockPageUrl });
           console.log(`🚫 Re-blocked tab ${tab.id} for ${domain}`);
         }
