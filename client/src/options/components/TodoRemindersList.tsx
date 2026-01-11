@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { X, Copy, Pencil, Check } from 'lucide-react';
+import { X, Copy, Pencil, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,11 @@ interface TodoRemindersListProps {
   distractionModeExpiry: number | null;
   onEnableDistractionMode: () => void;
   onDisableDistractionMode: () => void;
+  expanded: boolean;
+  onToggleExpanded: () => void;
 }
+
+const DEFAULT_VISIBLE_COUNT = 4;
 
 export default function TodoRemindersList({
   todoReminders,
@@ -35,6 +39,8 @@ export default function TodoRemindersList({
   distractionModeExpiry,
   onEnableDistractionMode,
   onDisableDistractionMode,
+  expanded,
+  onToggleExpanded,
 }: TodoRemindersListProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -138,7 +144,10 @@ export default function TodoRemindersList({
           onDisable={onDisableDistractionMode}
         />
         <div className="space-y-2">
-          {todoReminders.map((reminder) => {
+          {(expanded
+            ? todoReminders
+            : todoReminders.slice(0, DEFAULT_VISIBLE_COUNT)
+          ).map((reminder) => {
             const displayUrl = formatDisplayUrl(reminder.url);
             const isEditing = editingId === reminder.id;
 
@@ -227,6 +236,26 @@ export default function TodoRemindersList({
               </div>
             );
           })}
+          {todoReminders.length > DEFAULT_VISIBLE_COUNT && (
+            <Button
+              onClick={onToggleExpanded}
+              variant="ghost"
+              size="sm"
+              className="w-full mt-2 text-muted-foreground hover:text-foreground"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp size={16} className="mr-1" />
+                  Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDown size={16} className="mr-1" />
+                  Show {todoReminders.length - DEFAULT_VISIBLE_COUNT} more
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

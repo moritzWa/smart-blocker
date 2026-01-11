@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import TodoRemindersList from './components/TodoRemindersList';
 import UnblockedSitesList from './components/UnblockedSitesList';
 import StrictModeToggle from './components/StrictModeToggle';
-import DistractionModeButton from './components/DistractionModeButton';
 import SiteListInput from './components/SiteListInput';
 import SiteBlockImport from './components/SiteBlockImport';
 import AccessHistoryPanel from './components/AccessHistoryPanel';
@@ -53,11 +52,12 @@ export default function Options() {
   const [todoReminders, setTodoReminders] = useState<TodoReminder[]>([]);
   const [showImport, setShowImport] = useState(false);
   const [highlightTodos, setHighlightTodos] = useState(false);
-  const [showHistory, setShowHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState<boolean | null>(null);
   const [accessHistory, setAccessHistory] = useState<AccessAttempt[]>([]);
   const [distractionModeExpiry, setDistractionModeExpiry] = useState<
     number | null
   >(null);
+  const [todoListExpanded, setTodoListExpanded] = useState(false);
 
   // Update favicon based on strict mode
   useFaviconStrictMode(strictMode);
@@ -68,6 +68,8 @@ export default function Options() {
     loadTodoReminders();
     loadAccessHistory();
     loadDistractionMode();
+    loadTodoListExpanded();
+    loadShowHistory();
 
     // Listen for storage changes and update immediately
     const handleStorageChange = (
@@ -83,6 +85,12 @@ export default function Options() {
         }
         if (changes.distractionModeExpiry) {
           loadDistractionMode();
+        }
+        if (changes.todoListExpanded) {
+          loadTodoListExpanded();
+        }
+        if (changes.showHistory) {
+          loadShowHistory();
         }
       }
       if (namespace === 'local' && changes.accessHistory) {
@@ -202,6 +210,22 @@ export default function Options() {
     } else {
       setDistractionModeExpiry(null);
     }
+  }
+
+  async function loadTodoListExpanded() {
+    const result = await chrome.storage.sync.get({ todoListExpanded: false });
+    setTodoListExpanded(result.todoListExpanded === true);
+  }
+
+  async function handleToggleTodoListExpanded() {
+    const newValue = !todoListExpanded;
+    setTodoListExpanded(newValue);
+    await chrome.storage.sync.set({ todoListExpanded: newValue });
+  }
+
+  async function loadShowHistory() {
+    const result = await chrome.storage.sync.get({ showHistory: true });
+    setShowHistory(result.showHistory === true);
   }
 
   async function handleEnableDistractionMode() {
@@ -568,11 +592,13 @@ export default function Options() {
     setAccessHistory(result.accessHistory as AccessAttempt[]);
   }
 
-  function handleToggleHistory() {
-    if (!showHistory) {
+  async function handleToggleHistory() {
+    const newValue = !showHistory;
+    if (newValue) {
       loadAccessHistory();
     }
-    setShowHistory(!showHistory);
+    setShowHistory(newValue);
+    await chrome.storage.sync.set({ showHistory: newValue });
   }
 
   return (
@@ -601,13 +627,13 @@ export default function Options() {
         {/* Two-column layout on wide screens (only when history is shown) */}
         <div
           className={`flex flex-col gap-6 ${
-            showHistory ? 'min-[900px]:flex-row' : ''
+            showHistory !== false ? 'min-[900px]:flex-row' : ''
           }`}
         >
           {/* Left column - Main settings */}
           <div
             className={`flex flex-col gap-6 ${
-              showHistory
+              showHistory !== false
                 ? 'w-full min-[900px]:flex-1 min-[900px]:w-1/2'
                 : 'max-w-3xl mx-auto w-full'
             }`}
@@ -622,6 +648,8 @@ export default function Options() {
               distractionModeExpiry={distractionModeExpiry}
               onEnableDistractionMode={handleEnableDistractionMode}
               onDisableDistractionMode={handleDisableDistractionMode}
+              expanded={todoListExpanded}
+              onToggleExpanded={handleToggleTodoListExpanded}
             />
 
             <UnblockedSitesList
@@ -669,7 +697,7 @@ export default function Options() {
             />
 
             {/* History in single-column layout (hidden on wide screens) */}
-            {showHistory && (
+            {showHistory !== false && (
               <div className="min-[900px]:hidden">
                 <AccessHistoryPanel accessHistory={accessHistory} />
               </div>
@@ -677,16 +705,18 @@ export default function Options() {
           </div>
 
           {/* Right column - Access History (visible on wide screens when shown) */}
-          {showHistory && (
-            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:w-1/2">
-              <AccessHistoryPanel accessHistory={accessHistory} />
+          {showHistory !== false && (
+            <div className="hidden min-[900px]:block min-[900px]:flex-1 min-[900px]:w-1/2 min-[900px]:relative">
+              <div className="min-[900px]:absolute min-[900px]:inset-0 min-[900px]:overflow-hidden">
+                <AccessHistoryPanel accessHistory={accessHistory} fillHeight />
+              </div>
             </div>
           )}
         </div>
       </div>
 
       <FooterLinks
-        showHistory={showHistory}
+        showHistory={showHistory !== false}
         onToggleHistory={handleToggleHistory}
         onReviewClick={handleReviewClick}
         onToggleImport={() => setShowImport(!showImport)}

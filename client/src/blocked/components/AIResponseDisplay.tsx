@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CornerDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FORM_WIDTH } from '../constants';
+import { cn } from '@/lib/utils';
 
 interface AIResponse {
   valid: boolean | null;
@@ -89,7 +90,7 @@ export default function AIResponseDisplay({
         </div>
       </div>
 
-      <div className="flex gap-3 w-full">
+      <div className={cn(FORM_WIDTH, 'flex gap-3')}>
         {aiResponse.valid ? (
           <>
             <Button

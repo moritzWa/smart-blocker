@@ -4,6 +4,7 @@ import { parseMarkdown } from '@/blocked/utils';
 
 interface AccessHistoryPanelProps {
   accessHistory: AccessAttempt[];
+  fillHeight?: boolean;
 }
 
 // Get favicon URL from Google's service
@@ -110,18 +111,23 @@ function capitalizeFirst(text: string): string {
 
 export default function AccessHistoryPanel({
   accessHistory,
+  fillHeight = false,
 }: AccessHistoryPanelProps) {
   const groupedHistory = groupHistoryByDay(accessHistory);
 
   return (
-    <Card className="p-4 rounded-xl">
+    <Card
+      className={`p-4 rounded-xl ${fillHeight ? 'h-full flex flex-col' : ''}`}
+    >
       <h3 className="text-lg font-semibold mb-3">Access History</h3>
       {accessHistory.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No history yet. Once you unblock a site, it will appear here.
         </p>
       ) : (
-        <div className="space-y-4 overflow-y-auto max-h-[67.5vh]">
+        <div
+          className={`space-y-4 overflow-y-auto ${fillHeight ? 'flex-1 min-h-0' : 'max-h-[67.5vh]'}`}
+        >
           {Array.from(groupedHistory.entries()).map(([dayLabel, attempts]) => (
             <div key={dayLabel}>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">
