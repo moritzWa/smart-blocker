@@ -1,4 +1,7 @@
+import { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import type { AccessAttempt } from '../types';
 import { parseMarkdown } from '@/blocked/utils';
 
@@ -109,17 +112,83 @@ function capitalizeFirst(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
+function formatOutcome(outcome: AccessAttempt['outcome']): string {
+  switch (outcome) {
+    case 'approved':
+      return 'Approved';
+    case 'rejected':
+      return 'Rejected';
+    case 'blocked':
+      return 'Blocked (no interaction)';
+    case 'reminder':
+      return 'Saved as reminder';
+    case 'abandoned':
+      return 'Abandoned';
+    default:
+      return outcome;
+  }
+}
+
+function formatHistoryForClipboard(history: AccessAttempt[]): string {
+  return history
+    .map((attempt) => {
+      const date = new Date(attempt.timestamp);
+      const dateStr = date.toLocaleDateString([], {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      let text = `## ${attempt.domain}\n`;
+      text += `**Date:** ${dateStr}\n`;
+      text += `**User:** ${attempt.reason}\n`;
+      if (attempt.aiMessage) {
+        text += `**AI:** ${attempt.aiMessage}\n`;
+      }
+      text += `**Outcome:** ${formatOutcome(attempt.outcome)}`;
+      if (attempt.outcome === 'approved' && attempt.durationSeconds) {
+        const mins = Math.round(attempt.durationSeconds / 60);
+        text += ` (${mins} min)`;
+      }
+      return text;
+    })
+    .join('\n\n---\n\n');
+}
+
 export default function AccessHistoryPanel({
   accessHistory,
   fillHeight = false,
 }: AccessHistoryPanelProps) {
   const groupedHistory = groupHistoryByDay(accessHistory);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    const text = formatHistoryForClipboard(accessHistory);
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <Card
       className={`p-4 rounded-xl ${fillHeight ? 'h-full flex flex-col' : ''}`}
     >
-      <h3 className="text-lg font-semibold mb-3">Access History</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Access History</h3>
+        {accessHistory.length > 0 && (
+          <Button
+            onClick={handleCopy}
+            variant="ghost"
+            size="sm"
+            title="Copy to clipboard"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? 'Copied' : 'Copy'}
+          </Button>
+        )}
+      </div>
       {accessHistory.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No history yet. Once you unblock a site, it will appear here.
