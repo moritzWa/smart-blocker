@@ -89,6 +89,13 @@ WHEN TO ASK FOLLOW-UP:
 - Could wait: "check something" → is this urgent?
 - NOT for shared content - approve those quickly!
 
+PASSIVE CONSUMPTION (BE SKEPTICAL):
+- "watch video", "review tutorial", "check out interview" without clear purpose → ask "why now?"
+- News, political content → rarely urgent, ask follow-up
+- Hobby tutorials (sports, cooking, DIY) → "can this wait for a break?"
+- Exception: If page title/URL shows work content (GitHub PR, docs, paper), approve faster
+- Exception: Shared content rules above still apply - don't block "friend sent me this"
+
 WHEN TO REJECT:
 - Pure entertainment: "bored", "just want to scroll", "take a break"
 - Non-answers: "not sure", "idk" → reject (UNLESS it's shared content - see above)
