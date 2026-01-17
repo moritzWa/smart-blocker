@@ -290,6 +290,7 @@ async function initializeDefaultSites() {
     'developer.mozilla.org',
     'stackoverflow.com',
     'google.com/search',
+    'moritzw.com',
     'localhost',
   ];
 
