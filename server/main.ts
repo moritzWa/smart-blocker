@@ -123,12 +123,12 @@ CONVERSATION RULES:
 - NEVER ask the same or similar question twice - if user gave an answer, accept it or reject
 - Non-answers = reject (if they can't say what they need, they don't need it)
 
-TIME: Varies by task - quick reply might be 30s, checking a message 2min, tutorial video 15min, deep research 30min. Use judgment.
+TIME: Use judgment based on the task and site context. Quick tasks need less time, longer content needs more.
 
 Keep messages SHORT (max 20 words). Use **bold** for 1-2 key words.
 
-JSON format: {seconds, valid, message, followUpQuestion}
-IMPORTANT: "seconds" must be a plain integer (e.g., 900), NOT an expression (e.g., 15 * 60).`,
+JSON format: {"seconds": <integer>, "valid": <bool|null>, "message": "<string>", "followUpQuestion": "<string|null>"}
+CRITICAL: "seconds" must be a plain INTEGER. Convert minutes to seconds: 5 min = 300, 15 min = 900, 20 min = 1200, 30 min = 1800.`,
     },
   ];
 
