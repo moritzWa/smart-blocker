@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { AccessAttempt } from '../types';
 import { parseMarkdown } from '@/blocked/utils';
 
@@ -25,35 +32,35 @@ function getOutcomeColors(outcome: AccessAttempt['outcome']): {
     case 'approved':
       // Red - time spent on distraction
       return {
-        bg: 'bg-red-100 dark:bg-red-950/50',
+        bg: 'bg-red-50 dark:bg-red-950/50',
         text: 'text-red-900 dark:text-red-200',
         subtext: 'text-red-700 dark:text-red-300',
       };
     case 'rejected':
       // Green - AI stopped you
       return {
-        bg: 'bg-emerald-100 dark:bg-emerald-950/50',
+        bg: 'bg-emerald-50 dark:bg-emerald-950/50',
         text: 'text-emerald-900 dark:text-emerald-200',
         subtext: 'text-emerald-700 dark:text-emerald-300',
       };
     case 'blocked':
       // Green - you stopped yourself (best outcome!)
       return {
-        bg: 'bg-emerald-100 dark:bg-emerald-950/50',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/50',
         text: 'text-emerald-900 dark:text-emerald-200',
         subtext: 'text-emerald-700 dark:text-emerald-300',
       };
     case 'reminder':
       // Blue - saved for later
       return {
-        bg: 'bg-blue-100 dark:bg-blue-950/50',
+        bg: 'bg-blue-50 dark:bg-blue-950/50',
         text: 'text-blue-900 dark:text-blue-200',
         subtext: 'text-blue-700 dark:text-blue-300',
       };
     case 'abandoned':
       // Amber - started but gave up
       return {
-        bg: 'bg-amber-100 dark:bg-amber-950/50',
+        bg: 'bg-amber-50 dark:bg-amber-950/50',
         text: 'text-amber-900 dark:text-amber-200',
         subtext: 'text-amber-700 dark:text-amber-300',
       };
@@ -161,11 +168,48 @@ export default function AccessHistoryPanel({
   accessHistory,
   fillHeight = false,
 }: AccessHistoryPanelProps) {
-  const groupedHistory = groupHistoryByDay(accessHistory);
   const [copied, setCopied] = useState(false);
+  const [domainFilter, setDomainFilter] = useState<string>('all');
+
+  // Normalize domain - extract hostname from URLs and strip www.
+  function normalizeDomain(domain: string): string {
+    try {
+      let hostname = domain;
+      if (domain.startsWith('http://') || domain.startsWith('https://')) {
+        hostname = new URL(domain).hostname;
+      }
+      // Strip www. prefix
+      if (hostname.startsWith('www.')) {
+        hostname = hostname.slice(4);
+      }
+      return hostname;
+    } catch {
+      return domain;
+    }
+  }
+
+  // Get unique domains sorted by frequency (normalized)
+  const domains = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const attempt of accessHistory) {
+      const normalized = normalizeDomain(attempt.domain);
+      counts.set(normalized, (counts.get(normalized) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([domain]) => domain);
+  }, [accessHistory]);
+
+  // Filter history by selected domain (using normalized comparison)
+  const filteredHistory = useMemo(() => {
+    if (domainFilter === 'all') return accessHistory;
+    return accessHistory.filter((a) => normalizeDomain(a.domain) === domainFilter);
+  }, [accessHistory, domainFilter]);
+
+  const groupedHistory = groupHistoryByDay(filteredHistory);
 
   async function handleCopy() {
-    const text = formatHistoryForClipboard(accessHistory);
+    const text = formatHistoryForClipboard(filteredHistory);
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -175,23 +219,44 @@ export default function AccessHistoryPanel({
     <Card
       className={`p-4 rounded-xl ${fillHeight ? 'h-full flex flex-col' : ''}`}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-2">
         <h3 className="text-lg font-semibold">Access History</h3>
         {accessHistory.length > 0 && (
-          <Button
-            onClick={handleCopy}
-            variant="ghost"
-            size="sm"
-            title="Copy to clipboard"
-          >
-            {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? 'Copied' : 'Copy'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleCopy}
+              variant="ghost"
+              size="sm"
+              title="Copy to clipboard"
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+            {domains.length > 1 && (
+              <Select value={domainFilter} onValueChange={setDomainFilter}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Filter by domain" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All domains</SelectItem>
+                  {domains.map((domain) => (
+                    <SelectItem key={domain} value={domain}>
+                      {domain}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         )}
       </div>
       {accessHistory.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No history yet. Once you unblock a site, it will appear here.
+        </p>
+      ) : filteredHistory.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          No history for this domain.
         </p>
       ) : (
         <div

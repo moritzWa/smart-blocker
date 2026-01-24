@@ -20,6 +20,7 @@
     "vite-plugin-web-extension": "^4.5.0"
   },
   "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.2.8",
