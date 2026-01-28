@@ -55,7 +55,7 @@ export default function ReasonForm({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                onClick={onSubmit}
+                onClick={() => onSubmit()}
                 disabled={!reason.trim() || loading}
                 variant="default"
                 className="w-full mb-4"
