@@ -376,12 +376,12 @@ export default function BlockedPage() {
   };
 
   const handleShowTodoInput = () => {
-    // Priority: user's typed reason > page title > empty
-
-    console.log('🔍 siteMetadata:', siteMetadata);
-    console.log('🔍 reason:', reason);
-
-    if (reason.trim()) {
+    // Combine original reason + follow-up answer if both exist
+    if (reason.trim() && followUpAnswer.trim()) {
+      setTodoNote(`${reason.trim()}, ${followUpAnswer.trim()}`);
+    } else if (followUpAnswer.trim()) {
+      setTodoNote(followUpAnswer.trim());
+    } else if (reason.trim()) {
       setTodoNote(reason.trim());
     } else if (siteMetadata?.title) {
       setTodoNote(siteMetadata.title);
@@ -523,10 +523,10 @@ export default function BlockedPage() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={handleReset}
+                  onClick={() => handleShowTodoInput()}
                   className="flex-1 p-3 text-lg bg-secondary text-secondary-foreground rounded-lg"
                 >
-                  Start Over
+                  Save Reminder
                 </button>
                 <button
                   type="submit"
