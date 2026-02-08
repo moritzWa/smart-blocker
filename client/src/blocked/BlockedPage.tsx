@@ -386,6 +386,7 @@ export default function BlockedPage() {
     } else if (siteMetadata?.title) {
       setTodoNote(siteMetadata.title);
     }
+    setAiResponse(null);
     setShowTodoInput(true);
   };
 
