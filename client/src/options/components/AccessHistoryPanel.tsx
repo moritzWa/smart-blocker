@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Shield, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -164,12 +164,32 @@ function formatHistoryForClipboard(history: AccessAttempt[]): string {
     .join('\n\n---\n\n');
 }
 
+// Compute 2-week stats from access history
+function useTwoWeekStats(history: AccessAttempt[]) {
+  return useMemo(() => {
+    const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+    const recent = history.filter((a) => a.timestamp >= twoWeeksAgo);
+
+    const prevented = recent.filter(
+      (a) => a.outcome === 'rejected' || a.outcome === 'blocked' || a.outcome === 'abandoned'
+    ).length;
+
+    const distracted = recent.filter((a) => a.outcome === 'approved').length;
+
+    const total = prevented + distracted;
+    const preventedPct = total > 0 ? Math.round((prevented / total) * 100) : 0;
+
+    return { prevented, distracted, total, preventedPct };
+  }, [history]);
+}
+
 export default function AccessHistoryPanel({
   accessHistory,
   fillHeight = false,
 }: AccessHistoryPanelProps) {
   const [copied, setCopied] = useState(false);
   const [domainFilter, setDomainFilter] = useState<string>('all');
+  const stats = useTwoWeekStats(accessHistory);
 
   // Normalize domain - extract hostname from URLs and strip www.
   function normalizeDomain(domain: string): string {
@@ -250,6 +270,38 @@ export default function AccessHistoryPanel({
           </div>
         )}
       </div>
+      {/* 2-week stats bar */}
+      {stats.total > 0 && (
+        <div className="mb-4 space-y-2">
+          <div className="flex gap-3">
+            <div className="flex-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Shield size={14} className="text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">Prevented</span>
+              </div>
+              <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{stats.prevented}</div>
+            </div>
+            <div className="flex-1 rounded-lg bg-red-50 dark:bg-red-950/50 p-3 text-center">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <AlertTriangle size={14} className="text-red-500 dark:text-red-400" />
+                <span className="text-xs font-medium text-red-600 dark:text-red-300 uppercase tracking-wide">Distracted</span>
+              </div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-300">{stats.distracted}</div>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="relative h-2 rounded-full bg-red-200 dark:bg-red-900/50 overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-500"
+              style={{ width: `${stats.preventedPct}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            Last 14 days - {stats.preventedPct}% of distractions blocked
+          </p>
+        </div>
+      )}
+
       {accessHistory.length === 0 ? (
         <p className="text-muted-foreground text-sm">
           No history yet. Once you unblock a site, it will appear here.
