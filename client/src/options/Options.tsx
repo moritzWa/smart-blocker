@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 import TodoRemindersList from './components/TodoRemindersList';
 import UnblockedSitesList from './components/UnblockedSitesList';
 import StrictModeToggle from './components/StrictModeToggle';
-import SiteListInput from './components/SiteListInput';
+import SiteList from './components/SiteList';
 import SiteBlockImport from './components/SiteBlockImport';
 import AccessHistoryPanel from './components/AccessHistoryPanel';
 import FooterLinks from './components/FooterLinks';
 import { Card } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import type { UnblockedSite, TodoReminder, AccessAttempt } from './types';
 import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
@@ -44,8 +43,9 @@ function isTodoReminderArray(value: unknown): value is TodoReminder[] {
 }
 
 export default function Options() {
-  const [allowedSites, setAllowedSites] = useState('');
-  const [blockedSites, setBlockedSites] = useState('');
+  const [allowedSites, setAllowedSites] = useState<string[]>([]);
+  const [blockedSites, setBlockedSites] = useState<string[]>([]);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [strictMode, setStrictMode] = useState(false);
   const [status, setStatus] = useState('');
   const [unblockedSites, setUnblockedSites] = useState<UnblockedSite[]>([]);
@@ -102,30 +102,11 @@ export default function Options() {
     return () => chrome.storage.onChanged.removeListener(handleStorageChange);
   }, []);
 
-  // Auto-save allowedSites after 1 second of no typing
+  // Auto-save when sites change (skip initial load)
   useEffect(() => {
-    if (allowedSites === '') return; // Skip on initial load
-    const timer = setTimeout(() => {
-      saveSettings();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [allowedSites]);
-
-  // Auto-save blockedSites after 1 second of no typing
-  useEffect(() => {
-    if (blockedSites === '') return; // Skip on initial load
-    const timer = setTimeout(() => {
-      saveSettings();
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [blockedSites]);
-
-  // Auto-save strictMode immediately when toggled
-  useEffect(() => {
-    // Skip on initial load - check if we've loaded settings at least once
-    if (allowedSites === '' && blockedSites === '') return;
+    if (!settingsLoaded) return;
     saveSettings();
-  }, [strictMode]);
+  }, [allowedSites, blockedSites, strictMode]);
 
   // Check URL params for highlight todos
   useEffect(() => {
@@ -155,9 +136,10 @@ export default function Options() {
     const strictModeValue =
       typeof result.strictMode === 'boolean' ? result.strictMode : false;
 
-    setAllowedSites(allowedArray.join('\n'));
-    setBlockedSites(blockedArray.join('\n'));
+    setAllowedSites(allowedArray);
+    setBlockedSites(blockedArray);
     setStrictMode(strictModeValue);
+    setSettingsLoaded(true);
   }
 
   async function loadUnblockedSites() {
@@ -239,12 +221,9 @@ export default function Options() {
   }
 
   async function saveSettings() {
-    const allowedSitesList = allowedSites.split('\n').filter((s) => s.trim());
-    const blockedSitesList = blockedSites.split('\n').filter((s) => s.trim());
-
     await chrome.storage.sync.set({
-      allowedSites: allowedSitesList,
-      blockedSites: blockedSitesList,
+      allowedSites: allowedSites.filter((s) => s.trim()),
+      blockedSites: blockedSites.filter((s) => s.trim()),
       strictMode,
     });
 
@@ -368,169 +347,99 @@ export default function Options() {
     const MINUTE = 60 * 1000;
     const HOUR = 60 * MINUTE;
 
-    const exampleHistory: AccessAttempt[] = [
-      // Today - recent attempts
-      {
-        id: `seed-${now}-1`,
-        domain:
-          'https://www.youtube.com/watch?v=mbDlCOoMZfs&pp=ygUodWZjIHJlY3J1aXRpbmcgZnVubmVsIG1pbGl0aWEgdXNiZWtpc3RhbtIHCQlNCgGHKiGM7w%3D%3D',
-        reason: 'Watch the new Fireship video on Bun 2.0',
-        timestamp: now - 15 * MINUTE,
-        outcome: 'approved',
-        durationSeconds: 600,
-        aiMessage:
-          'Tech tutorial - sounds specific. **10 minutes** should cover it.',
-      },
-      {
-        id: `seed-${now}-2`,
-        domain: 'x.com',
-        reason: 'just bored',
-        timestamp: now - 45 * MINUTE,
-        outcome: 'rejected',
-        aiMessage: "Boredom isn't a task. Maybe take a **walk** instead?",
-      },
-      {
-        id: `seed-${now}-3`,
-        domain: 'reddit.com',
-        reason: 'check r/reactjs for solution to hydration error',
-        timestamp: now - 2 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 300,
-        aiMessage:
-          "Debugging help - that's legit. **5 minutes** to find your answer.",
-      },
-      {
-        id: `seed-${now}-4`,
-        domain: 'instagram.com',
-        reason: 'friend sent me something',
-        timestamp: now - 3 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 60,
-        aiMessage:
-          'Quick check of shared content. **1 minute** should be enough.',
-      },
-      {
-        id: `seed-${now}-5`,
-        domain: 'linkedin.com',
-        reason: 'reply to recruiter message',
-        timestamp: now - 4 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 180,
-        aiMessage: 'Professional networking - go ahead. **3 minutes**.',
-      },
-      // Yesterday
-      {
-        id: `seed-${now}-6`,
-        domain: 'twitter.com',
-        reason: 'idk',
-        timestamp: now - 26 * HOUR,
-        outcome: 'rejected',
-        aiMessage:
-          "If you can't say what you need, you probably don't need it.",
-      },
-      {
-        id: `seed-${now}-7`,
-        domain: 'youtube.com',
-        reason: 'background music while working',
-        timestamp: now - 28 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 3600,
-        aiMessage: 'Music for focus - **1 hour** of lo-fi beats coming up.',
-      },
-      {
-        id: `seed-${now}-8`,
-        domain: 'reddit.com',
-        reason: 'want to browse',
-        timestamp: now - 30 * HOUR,
-        outcome: 'rejected',
-        aiMessage: "Browsing isn't a task. What specifically do you need?",
-      },
-      {
-        id: `seed-${now}-9`,
-        domain: 'facebook.com',
-        reason: 'check event details for Saturday',
-        timestamp: now - 32 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 120,
-        aiMessage: 'Event planning - **2 minutes** to get the details.',
-      },
-      {
-        id: `seed-${now}-10`,
-        domain: 'tiktok.com',
-        reason: 'take a break',
-        timestamp: now - 34 * HOUR,
-        outcome: 'rejected',
-        aiMessage:
-          'TikTok breaks have a way of becoming hours. Try a **real break** instead.',
-      },
-      // Two days ago
-      {
-        id: `seed-${now}-11`,
-        domain: 'x.com',
-        reason: 'DM coworker about standup time',
-        timestamp: now - 50 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 60,
-        aiMessage: 'Quick work message. **1 minute**.',
-      },
-      {
-        id: `seed-${now}-12`,
-        domain: 'youtube.com',
-        reason: 'learn about Next.js app router',
-        timestamp: now - 52 * HOUR,
-        outcome: 'reminder',
-        aiMessage:
-          'Added to your **todo list** - watch when you have dedicated learning time.',
-      },
-      {
-        id: `seed-${now}-13`,
-        domain: 'instagram.com',
-        reason: 'post story',
-        timestamp: now - 54 * HOUR,
-        outcome: 'abandoned',
-        aiMessage: 'What story are you posting? Is this time-sensitive?',
-      },
-      {
-        id: `seed-${now}-14`,
-        domain: 'reddit.com',
-        reason: 'research mechanical keyboards',
-        timestamp: now - 56 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 900,
-        aiMessage: 'Shopping research - **15 minutes** to compare options.',
-      },
-      {
-        id: `seed-${now}-15`,
-        domain: 'linkedin.com',
-        reason: 'update job status',
-        timestamp: now - 58 * HOUR,
-        outcome: 'approved',
-        durationSeconds: 300,
-        aiMessage: 'Profile update - **5 minutes**.',
-      },
-      // Blocked - user saw page and left without trying
-      {
-        id: `seed-${now}-16`,
-        domain: 'youtube.com',
-        reason: 'no interaction!',
-        timestamp: now - 5 * HOUR,
-        outcome: 'blocked',
-      },
-      {
-        id: `seed-${now}-17`,
-        domain: 'x.com',
-        reason: 'no interaction!',
-        timestamp: now - 8 * HOUR,
-        outcome: 'blocked',
-      },
-      {
-        id: `seed-${now}-18`,
-        domain: 'tiktok.com',
-        reason: 'no interaction!',
-        timestamp: now - 48 * HOUR,
-        outcome: 'blocked',
-      },
+    const DAY = 24 * HOUR;
+    const domains = ['youtube.com', 'x.com', 'reddit.com', 'instagram.com', 'linkedin.com', 'tiktok.com', 'facebook.com'];
+    const rejectionMessages = [
+      "Boredom isn't a task. Maybe take a **walk** instead?",
+      "If you can't say what you need, you probably don't need it.",
+      "Browsing isn't a task. What specifically do you need?",
+      'TikTok breaks have a way of becoming hours. Try a **real break** instead.',
+      "That sounds like procrastination. What should you be working on?",
     ];
+    const approvalMessages = [
+      'Tech tutorial - sounds specific. **10 minutes** should cover it.',
+      "Debugging help - that's legit. **5 minutes** to find your answer.",
+      'Quick check of shared content. **1 minute** should be enough.',
+      'Professional networking - go ahead. **3 minutes**.',
+      'Music for focus - **1 hour** of lo-fi beats coming up.',
+      'Event planning - **2 minutes** to get the details.',
+      'Quick work message. **1 minute**.',
+      'Shopping research - **15 minutes** to compare options.',
+      'Profile update - **5 minutes**.',
+    ];
+    const approvalReasons = [
+      'Watch tutorial on React hooks', 'check r/reactjs for hydration error',
+      'friend sent me something', 'reply to recruiter message',
+      'background music while working', 'check event details for Saturday',
+      'DM coworker about standup', 'research mechanical keyboards',
+      'update job status', 'check out that video Sarah recommended',
+    ];
+    const rejectionReasons = [
+      'just bored', 'idk', 'want to browse', 'take a break',
+      'nothing specific', 'just checking',
+    ];
+
+    const exampleHistory: AccessAttempt[] = [];
+    let id = 0;
+
+    // Generate data across all 14 days with 3-6 events per day
+    for (let day = 0; day < 14; day++) {
+      const dayOffset = day * DAY;
+      const eventsPerDay = 3 + (day % 3); // 3, 4, 5, 3, 4, 5, ...
+
+      for (let j = 0; j < eventsPerDay; j++) {
+        id++;
+        // Spread events across the day (morning to evening)
+        const hourOffset = (8 + j * 3) * HOUR; // 8am, 11am, 2pm, 5pm, 8pm
+        const timestamp = now - dayOffset - hourOffset;
+        const domain = domains[(id + day) % domains.length];
+
+        // Deterministic distribution: ~35% blocked, ~25% rejected, ~25% approved, ~15% abandoned
+        const roll = (id * 3 + day * 7) % 20;
+        if (roll < 7) {
+          // blocked (35%)
+          exampleHistory.push({
+            id: `seed-${now}-${id}`,
+            domain,
+            reason: 'no interaction!',
+            timestamp,
+            outcome: 'blocked',
+          });
+        } else if (roll < 12) {
+          // rejected (25%)
+          exampleHistory.push({
+            id: `seed-${now}-${id}`,
+            domain,
+            reason: rejectionReasons[id % rejectionReasons.length],
+            timestamp,
+            outcome: 'rejected',
+            aiMessage: rejectionMessages[id % rejectionMessages.length],
+          });
+        } else if (roll < 17) {
+          // approved (25%)
+          const durations = [60, 120, 300, 600, 900, 3600];
+          exampleHistory.push({
+            id: `seed-${now}-${id}`,
+            domain,
+            reason: approvalReasons[id % approvalReasons.length],
+            timestamp,
+            outcome: 'approved',
+            durationSeconds: durations[id % durations.length],
+            aiMessage: approvalMessages[id % approvalMessages.length],
+          });
+        } else {
+          // abandoned (15%)
+          exampleHistory.push({
+            id: `seed-${now}-${id}`,
+            domain,
+            reason: 'post story',
+            timestamp,
+            outcome: 'abandoned',
+            aiMessage: 'What story are you posting? Is this time-sensitive?',
+          });
+        }
+      }
+    }
 
     const result = await chrome.storage.local.get({ accessHistory: [] });
     const existingHistory = result.accessHistory as AccessAttempt[];
@@ -539,7 +448,7 @@ export default function Options() {
     await chrome.storage.local.set({ accessHistory: mergedHistory });
     loadAccessHistory();
 
-    setStatus('Seeded 18 example history items!');
+    setStatus(`Seeded ${exampleHistory.length} example history items!`);
     setTimeout(() => setStatus(''), 2000);
   }
 
@@ -556,19 +465,15 @@ export default function Options() {
   function handleImport(importText: string) {
     const parsed = parseSiteBlockFormat(importText);
 
-    // Merge with existing settings (avoid duplicates)
-    const existingAllowed = allowedSites.split('\n').filter((s) => s.trim());
-    const existingBlocked = blockedSites.split('\n').filter((s) => s.trim());
-
     const mergedAllowed = [
-      ...new Set([...existingAllowed, ...parsed.allowedSites]),
+      ...new Set([...allowedSites, ...parsed.allowedSites]),
     ];
     const mergedBlocked = [
-      ...new Set([...existingBlocked, ...parsed.blockedSites]),
+      ...new Set([...blockedSites, ...parsed.blockedSites]),
     ];
 
-    setAllowedSites(mergedAllowed.join('\n'));
-    setBlockedSites(mergedBlocked.join('\n'));
+    setAllowedSites(mergedAllowed);
+    setBlockedSites(mergedBlocked);
     if (parsed.strictMode) {
       setStrictMode(true);
     }
@@ -590,6 +495,22 @@ export default function Options() {
   async function loadAccessHistory() {
     const result = await chrome.storage.local.get({ accessHistory: [] });
     setAccessHistory(result.accessHistory as AccessAttempt[]);
+  }
+
+  async function handleEndBreak(domain: string) {
+    // Remove from temporaryUnblocks
+    const result = await chrome.storage.sync.get({ temporaryUnblocks: {} });
+    const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
+    delete temporaryUnblocks[domain];
+    await chrome.storage.sync.set({ temporaryUnblocks });
+
+    // Clear the alarm
+    await chrome.alarms.clear(`unblock-${domain}`);
+
+    // Re-check all tabs to re-block if needed
+    chrome.runtime.sendMessage({ type: 'SETTINGS_UPDATED' });
+
+    loadUnblockedSites();
   }
 
   async function handleToggleHistory() {
@@ -655,38 +576,31 @@ export default function Options() {
             <UnblockedSitesList
               unblockedSites={unblockedSites}
               formatTimeRemaining={formatTimeRemaining}
+              onEndBreak={handleEndBreak}
             />
 
-            <Card className="p-4 flex flex-col gap-4 rounded-xl">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-1">
-                  Always Allowed Sites
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  One site per line. These sites will never be blocked.
-                </p>
-              </div>
+            <Card className="p-3 flex flex-col gap-3 rounded-xl">
+              <SiteList
+                label="Always Allowed Sites"
+                description="These sites will never be blocked."
+                sites={allowedSites}
+                onSitesChange={setAllowedSites}
+                placeholder="remnote.com"
+              />
 
               <StrictModeToggle
                 strictMode={strictMode}
                 onChange={setStrictMode}
               />
-
-              <Textarea
-                value={allowedSites}
-                onChange={(e) => setAllowedSites(e.target.value)}
-                rows={5}
-                placeholder={'remnote.com\nclaude.ai\ncalendar.google.com'}
-              />
             </Card>
 
-            <Card className="p-4 rounded-xl">
-              <SiteListInput
+            <Card className="p-3 rounded-xl">
+              <SiteList
                 label="Blocked Sites"
-                description="One site per line. These sites will be blocked."
-                value={blockedSites}
-                onChange={setBlockedSites}
-                placeholder="youtube.com&#10;tiktok.com&#10;facebook.com"
+                description="These sites will be blocked."
+                sites={blockedSites}
+                onSitesChange={setBlockedSites}
+                placeholder="youtube.com"
               />
             </Card>
 

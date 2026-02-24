@@ -64,6 +64,13 @@ function getOutcomeColors(outcome: AccessAttempt['outcome']): {
         text: 'text-amber-900 dark:text-amber-200',
         subtext: 'text-amber-700 dark:text-amber-300',
       };
+    case 'self-unlocked':
+      // Orange - user bypassed AI, self-approved
+      return {
+        bg: 'bg-orange-50 dark:bg-orange-950/50',
+        text: 'text-orange-900 dark:text-orange-200',
+        subtext: 'text-orange-700 dark:text-orange-300',
+      };
     default:
       return {
         bg: 'bg-muted/50',
@@ -131,6 +138,8 @@ function formatOutcome(outcome: AccessAttempt['outcome']): string {
       return 'Saved as reminder';
     case 'abandoned':
       return 'Abandoned';
+    case 'self-unlocked':
+      return 'Self-unlocked';
     default:
       return outcome;
   }
@@ -174,7 +183,9 @@ function useTwoWeekStats(history: AccessAttempt[]) {
       (a) => a.outcome === 'rejected' || a.outcome === 'blocked' || a.outcome === 'abandoned'
     ).length;
 
-    const distracted = recent.filter((a) => a.outcome === 'approved').length;
+    const distracted = recent.filter(
+      (a) => a.outcome === 'approved' || a.outcome === 'self-unlocked'
+    ).length;
 
     const total = prevented + distracted;
     const preventedPct = total > 0 ? Math.round((prevented / total) * 100) : 0;
@@ -299,6 +310,7 @@ export default function AccessHistoryPanel({
           <p className="text-xs text-muted-foreground text-center">
             Last 14 days - {stats.preventedPct}% of distractions blocked
           </p>
+
         </div>
       )}
 

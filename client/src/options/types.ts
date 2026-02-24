@@ -16,7 +16,8 @@ export type AccessAttemptOutcome =
   | 'rejected'
   | 'reminder'
   | 'abandoned'
-  | 'blocked';
+  | 'blocked'
+  | 'self-unlocked';
 
 export interface AccessAttempt {
   id: string;
