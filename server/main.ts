@@ -15,12 +15,16 @@ const groq = new OpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
 });
 
+// gpt-oss occasionally returns null for fields the prompt demands, which used
+// to fail Zod and surface as a blank 500 in the extension. Coerce instead.
+const nullTo = <T>(fallback: T) => (v: unknown) => (v === null || v === undefined ? fallback : v);
+
 // Zod schema for structured output
 const UnblockResponseSchema = z.object({
-  reasoning: z.string(), // Chain-of-thought: analyze the request before deciding
-  seconds: z.number().int().min(0).max(3600), // 0 for reject/follow-up, up to 60 minutes
+  reasoning: z.preprocess(nullTo(''), z.string()), // Chain-of-thought: analyze the request before deciding
+  seconds: z.preprocess(nullTo(0), z.number().int().min(0).max(3600)), // 0 for reject/follow-up, up to 60 minutes
   valid: z.boolean().nullable(), // null = need follow-up
-  message: z.string(),
+  message: z.preprocess(nullTo(''), z.string()),
   followUpQuestion: z.string().nullable().optional(), // question to ask user if valid is null
 });
 
