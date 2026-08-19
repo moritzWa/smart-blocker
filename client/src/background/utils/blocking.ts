@@ -1,3 +1,5 @@
+import { getAllReminders } from '../../lib/reminders';
+
 export function normalizeUrl(url: string): string {
   try {
     const urlObj = new URL(url);
@@ -59,7 +61,6 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
     temporaryUnblocks: {},
     strictMode: false,
     distractionModeExpiry: null,
-    todoReminders: [],
   });
 
   const allowedSites = result.allowedSites as string[];
@@ -67,7 +68,6 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
   const temporaryUnblocks = result.temporaryUnblocks as Record<string, number>;
   const strictMode = result.strictMode as boolean;
   const distractionModeExpiry = result.distractionModeExpiry as number | null;
-  const todoReminders = result.todoReminders as Array<{ hostname: string }>;
 
   console.log('🔍 Checking:', domain, { strictMode, allowedSites, blockedSites });
 
@@ -88,6 +88,7 @@ export async function checkIfBlocked(url: string): Promise<{ blocked: boolean }>
 
   // Check if distraction mode is active and domain is in todo reminders
   if (distractionModeExpiry && Date.now() < distractionModeExpiry) {
+    const todoReminders = await getAllReminders();
     const isTodoReminderDomain = todoReminders.some(
       (reminder) => matchesDomain(domain, reminder.hostname)
     );

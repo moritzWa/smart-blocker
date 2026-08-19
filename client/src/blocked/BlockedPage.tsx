@@ -314,11 +314,17 @@ export default function BlockedPage() {
       reviewDismissedPermanently: false,
     });
 
-    await chrome.runtime.sendMessage({
+    const saveResponse = await chrome.runtime.sendMessage({
       type: 'ADD_TODO_REMINDER',
       url: blockedUrl,
       note: todoNote.trim() || undefined,
     });
+
+    // Previously this failure was swallowed and the reminder just disappeared.
+    if (!saveResponse?.success) {
+      setError(saveResponse?.error || 'Could not save that reminder.');
+      return;
+    }
 
     // Increment reminder count
     const newReminderCount = (result.reminderCount as number) + 1;
@@ -489,6 +495,7 @@ export default function BlockedPage() {
                 setTodoNote={setTodoNote}
                 onSave={handleSaveTodoReminder}
                 onCancel={() => setShowTodoInput(false)}
+                error={error}
               />
             )}
           </>

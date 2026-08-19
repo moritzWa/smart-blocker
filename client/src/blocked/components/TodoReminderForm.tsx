@@ -14,6 +14,7 @@ interface TodoReminderFormProps {
   setTodoNote: (note: string) => void;
   onSave: () => void;
   onCancel: () => void;
+  error?: string | null;
 }
 
 export default function TodoReminderForm({
@@ -21,6 +22,7 @@ export default function TodoReminderForm({
   setTodoNote,
   onSave,
   onCancel,
+  error,
 }: TodoReminderFormProps) {
   // Handle Enter key to save
   useEffect(() => {
@@ -47,6 +49,9 @@ export default function TodoReminderForm({
         placeholder="Context for your reminder"
         className="mb-4"
       />
+      {error && (
+        <p className="mb-4 text-sm text-destructive text-left">{error}</p>
+      )}
       <div className="flex gap-3 w-full">
         <Button onClick={onCancel} variant="secondary" className="flex-1">
           Cancel

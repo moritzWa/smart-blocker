@@ -9,6 +9,7 @@ import {
   getAccessHistory,
 } from './services/storage';
 import type { AccessAttemptOutcome } from '../options/types';
+import { ensureMigrated } from '../lib/reminders';
 
 console.log('Focus Shield service worker loaded');
 
@@ -241,8 +242,28 @@ async function updateExtensionIcon() {
   }
 }
 
+// Kick the migration as soon as the worker starts, rather than waiting for a
+// reminder operation. ensureMigrated() de-dupes, so the lifecycle listeners
+// below cost nothing extra.
+runReminderMigration();
+
+async function runReminderMigration() {
+  try {
+    const result = await ensureMigrated();
+    if (!result.alreadyMigrated) {
+      console.log('Reminder storage migration:', result);
+    }
+  } catch (error) {
+    console.error('Reminder storage migration failed:', error);
+  }
+}
+
 // Set up default sites on first install or if storage is empty
 chrome.runtime.onInstalled.addListener(async (details) => {
+  // Runs on update too: moves the single `todoReminders` array onto one key
+  // per reminder, which is what stopped saves once it crossed 8KB.
+  await runReminderMigration();
+
   if (details.reason === 'install') {
     await initializeDefaultSites();
 
@@ -262,6 +283,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // Also check on startup in case storage was cleared
 chrome.runtime.onStartup.addListener(async () => {
+  // Backstop: onInstalled can be missed if the worker was torn down mid-run.
+  await runReminderMigration();
+
   const result = await chrome.storage.sync.get([
     'allowedSites',
     'blockedSites',

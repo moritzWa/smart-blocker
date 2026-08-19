@@ -8,6 +8,13 @@ import AccessHistoryPanel from './components/AccessHistoryPanel';
 import FooterLinks from './components/FooterLinks';
 import { Card } from '@/components/ui/card';
 import type { UnblockedSite, TodoReminder, AccessAttempt } from './types';
+import {
+  getAllReminders,
+  isReminderKey,
+  LEGACY_REMINDERS_KEY,
+  newReminderId,
+  putReminder,
+} from '../lib/reminders';
 import { formatTimeRemaining, parseSiteBlockFormat } from './utils';
 import { useFaviconStrictMode } from '@/hooks/useFaviconStrictMode';
 
@@ -23,22 +30,6 @@ function isTemporaryUnblocks(value: unknown): value is Record<string, number> {
     typeof value === 'object' &&
     value !== null &&
     Object.entries(value).every(([_, v]) => typeof v === 'number')
-  );
-}
-
-function isTodoReminderArray(value: unknown): value is TodoReminder[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (item) =>
-        typeof item === 'object' &&
-        item !== null &&
-        typeof item.id === 'string' &&
-        typeof item.url === 'string' &&
-        typeof item.hostname === 'string' &&
-        typeof item.timestamp === 'number' &&
-        (item.note === undefined || typeof item.note === 'string')
-    )
   );
 }
 
@@ -80,7 +71,12 @@ export default function Options() {
         if (changes.temporaryUnblocks) {
           loadUnblockedSites();
         }
-        if (changes.todoReminders) {
+        // Reminders are one key each, so watch the whole prefix.
+        if (
+          Object.keys(changes).some(
+            (key) => isReminderKey(key) || key === LEGACY_REMINDERS_KEY
+          )
+        ) {
           loadTodoReminders();
         }
         if (changes.distractionModeExpiry) {
@@ -168,16 +164,7 @@ export default function Options() {
   }
 
   async function loadTodoReminders() {
-    const result = await chrome.storage.sync.get({ todoReminders: [] });
-
-    // Validate type before using
-    if (!isTodoReminderArray(result.todoReminders)) {
-      console.warn('Invalid todoReminders format, using empty array');
-      setTodoReminders([]);
-      return;
-    }
-
-    setTodoReminders(result.todoReminders);
+    setTodoReminders(await getAllReminders());
   }
 
   async function loadDistractionMode() {
@@ -331,11 +318,11 @@ export default function Options() {
       },
     ];
 
-    const result = await chrome.storage.sync.get({ todoReminders: [] });
-    const existingTodos = result.todoReminders as TodoReminder[];
-    const mergedTodos = [...exampleTodos, ...existingTodos];
-
-    await chrome.storage.sync.set({ todoReminders: mergedTodos });
+    // The seed list reuses ids; under one-key-per-reminder that would collapse
+    // them into each other, so re-mint on the way in.
+    for (const todo of exampleTodos) {
+      await putReminder({ ...todo, id: newReminderId() });
+    }
     loadTodoReminders();
 
     setStatus('Seeded 3 example todos!');
