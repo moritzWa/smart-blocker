@@ -12,7 +12,7 @@ Instead of blocking distracting sites outright, Focus Shield asks *why* you want
 
 </div>
 
-![Describe the exception, get approved or denied](client/public/images/onboarding/core-flow.png)
+![The block page asking a follow-up question before deciding](docs/block-page.png)
 
 ## The secret: typing your reason makes you self-aware
 
@@ -25,6 +25,8 @@ It is easy to lie to yourself clicking "just 5 more minutes." But when you have 
 | "Check colleague's LinkedIn profile" | ⏰ Saved to To-Do Reminders instead |
 | "Scroll X feed" | ❌ Stay focused |
 
+![Describe the exception, then get approved or denied](client/public/images/onboarding/core-flow.png)
+
 ## Features
 
 - **AI bouncer.** Type why you need the site. The model evaluates the reason in context, and can ask a follow-up question before deciding.
@@ -35,6 +37,10 @@ It is easy to lie to yourself clicking "just 5 more minutes." But when you have 
 - **Access history.** Recent attempts per site feed back into the prompt, so repeated vague reasons get more skepticism, not less.
 - **Distraction Mode.** A 10 minute window where your saved reminder sites open freely.
 - **SiteBlock import**, dark mode, and no analytics. Your sites, history, and reminders live in `chrome.storage` on your machine.
+
+![Reminders, distraction mode, allow and block lists, and access history](docs/home.png)
+
+Everything lives on one settings page: your reminders, your lists, and an access history that shows what you tried to open and what the bouncer did about it.
 
 ![Dark mode and strict mode](client/public/images/onboarding/dark-mode-and-strict-mode.png)
 
