@@ -1,116 +1,89 @@
-# Focus Shield - AI Site & Distraction Blocker
+<div align="center">
 
-AI-powered Chrome extension to block distracting websites with smart temporary unblock functionality.
+<img src="client/public/images/icon128.png" width="88" alt="Focus Shield">
 
-## Project Structure
+# Focus Shield
 
-```
-smart-blocker/
-├── client/         # Chrome extension
-├── server/         # Backend API (AI bouncer)
-└── dist/          # Built extension (load in Chrome)
-```
+**The first site blocker with an AI bouncer.**
 
-## Quick Start
+Instead of blocking distracting sites outright, Focus Shield asks *why* you want to visit. Based on your reasoning it either blocks you or grants a specific duration, then re-blocks automatically. No manual timers. No workarounds. No willpower battles.
 
-### 1. Build Extension
+[**Install from the Chrome Web Store**](https://chromewebstore.google.com/detail/focus-shield-ai-site-dist/ibmmihgadnkilmknmfmohlclogcifboj)
 
-```bash
-cd client
-npm install
-npm run build
-```
+</div>
 
-Built extension will be in `dist/` folder.
+![Describe the exception, get approved or denied](client/public/images/onboarding/core-flow.png)
 
-### 2. Start AI Validation Server
+## The secret: typing your reason makes you self-aware
 
-```bash
-cd server
-cp .env.example .env  # Add your GROQ_API_KEY
-deno task dev
-```
+It is easy to lie to yourself clicking "just 5 more minutes." But when you have to *type* "check how many likes my post got" you suddenly realize: is this really what I need right now? The bouncer forces honest self-reflection before every distraction.
 
-Server runs on `http://localhost:8000`
-
-### 3. Load in Chrome
-
-1. Go to `chrome://extensions`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `client/dist` folder
-
-### Development
-
-```bash
-cd client && npm run dev     # Watch mode for extension
-cd server && deno task dev   # Run server (see Quick Start for first-time setup)
-```
-
-### Release
-
-1. Bump version in `client/manifest.json`
-2. Build and zip:
-   ```bash
-   cd client
-   npm run package
-   ```
-   Creates `focus-shield.zip` in repo root.
-3. Upload to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
+| You type | You get |
+| --- | --- |
+| "Watch React tutorial" | ✅ 15 minutes |
+| "Check weather" | ✅ 20 seconds |
+| "Check colleague's LinkedIn profile" | ⏰ Saved to To-Do Reminders instead |
+| "Scroll X feed" | ❌ Stay focused |
 
 ## Features
 
-### Current
+- **AI bouncer.** Type why you need the site. The model evaluates the reason in context, and can ask a follow-up question before deciding.
+- **Smart time-boxing.** The AI picks the duration. Quick lookup gets 30 seconds, a tutorial gets 15 minutes. You never set a timer.
+- **Auto-reblock.** When time expires every matching tab redirects back to the block page. A live countdown sits in the toolbar badge.
+- **To-Do Reminders.** Found something interesting but not urgent? Save it in one click, GTD style, and check it on your break instead of during deep work. The AI suggests this on its own when something can wait.
+- **Strict Mode.** Block everything except your allowed work sites.
+- **Access history.** Recent attempts per site feed back into the prompt, so repeated vague reasons get more skepticism, not less.
+- **Distraction Mode.** A 10 minute window where your saved reminder sites open freely.
+- **SiteBlock import**, dark mode, and no analytics. Your sites, history, and reminders live in `chrome.storage` on your machine.
 
-- **AI Bouncer**: Uses Llama 3.3 70B to validate unblock reasons (e.g., "Check Facebook Marketplace" vs "just bored")
-- **Block distracting sites** with allowlist/blocklist
-- **Allow-Only Mode**: Block everything except allowed sites
-- **Temporary unblock** with AI-determined duration (1-60 minutes)
-- **Todo Reminders**: Save blocked sites to check later
-- **Dark mode support** (system preference)
-- **Instant blocking** at tab navigation level
-- Settings page with live unblock countdown
+![Dark mode and strict mode](client/public/images/onboarding/dark-mode-and-strict-mode.png)
 
-### Planned
-
-- Analytics and usage tracking
-- Scheduled blocking (time-based rules)
-- Custom AI prompts for different sites
-
-## Configuration
-
-Settings available at: `chrome-extension://<id>/src/options/options.html`
-
-**Always Allowed Sites**:
+## How it works
 
 ```
-remnote.com
-claude.ai
-calendar.google.com
+client/    Chrome extension (React 19 + TS + Tailwind v4, Manifest V3)
+  background/   service worker: tab interception, storage, alarms
+  blocked/      the block page and its conversation UI
+  options/      settings, history, reminders
+server/    Deno API (the bouncer). Deployed on Deno Deploy.
+dist/      build output, load this in Chrome
 ```
 
-**Blocked Sites**:
+The service worker watches tab navigation, matches the hostname against your lists, and redirects to a local block page. That page sends your reason plus page metadata and recent access history to the Deno server, which prompts a model on Groq and returns `{ valid, seconds, message, followUpQuestion }`. On approval the worker writes a temporary unblock and schedules a `chrome.alarms` re-block.
 
+No API key ships in the extension. The request carries the blocked URL, the page title and description, your typed reason, and the recent attempts for that site, so the bouncer has enough context to spot a pattern.
+
+## Quick start
+
+```bash
+# 1. Build the extension
+cd client && npm install && npm run build   # output goes to ../dist
+
+# 2. Run the bouncer
+cd ../server
+echo 'GROQ_API_KEY="your-key"' > .env       # get one at console.groq.com
+deno task dev                                # http://localhost:8000
+
+# 3. Load in Chrome
+# chrome://extensions -> Developer mode -> Load unpacked -> select dist/
 ```
-https://www.youtube.com/
-https://www.tiktok.com/
-https://www.facebook.com/
-```
 
-**Allow-Only Mode**: Toggle to block all sites except those in the allowed list.
+A dev build (`npm run dev`) points at `http://localhost:8000`; a production build points at the deployed server.
 
-## Tech Stack
+### Server configuration
 
-**Client:**
+| Env var | Default | Purpose |
+| --- | --- | --- |
+| `GROQ_API_KEY` | required | Groq API credentials |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Swap models without a code change. Groq retires models periodically, which shows up as every request failing at once. |
 
-- TypeScript + React 19
-- Tailwind CSS v4
-- Vite + Chrome Extension Manifest v3
-- Service worker for instant blocking
+### Release
 
-**Server:**
+1. Bump `version` in `client/manifest.json`
+2. `cd client && npm run package` writes `focus-shield-v<version>.zip` to the repo root
+3. Upload it to the [Chrome Web Store dashboard](https://chrome.google.com/webstore/devconsole)
 
-- Deno runtime
-- Groq API (Llama 3.3 70B)
-- Zod for structured outputs
-- CORS-enabled REST API
+## Tech stack
+
+**Extension:** TypeScript, React 19, Tailwind CSS v4, Vite, Manifest V3 service worker.
+**Server:** Deno, Groq (`openai/gpt-oss-120b`), Zod for structured output, CORS-enabled REST.
