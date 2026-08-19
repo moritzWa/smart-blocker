@@ -90,5 +90,9 @@ JSON format: {seconds, valid, message, followUpQuestion}`,
   }
 
   const parsed = JSON.parse(response);
-  return UnblockResponseSchema.parse(parsed);
+  const result = UnblockResponseSchema.parse(parsed);
+  // An approval with 0 seconds expires the instant it is granted, which would
+  // bounce the user straight back to the block page. Floor it.
+  if (result.valid === true && result.seconds <= 0) result.seconds = 300;
+  return result;
 }
