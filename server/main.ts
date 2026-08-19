@@ -318,6 +318,17 @@ Deno.serve({ port: 8000 }, async (req) => {
     }
   }
 
+  if (req.method === 'GET' && new URL(req.url).pathname === '/health') {
+    // Reports the model actually in use, so a decommissioned model is one
+    // curl away instead of a mystery 500 in the extension.
+    return new Response(JSON.stringify({ ok: true, model: GROQ_MODEL }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+
   return new Response('Not Found', { status: 404 });
 });
 

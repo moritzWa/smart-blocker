@@ -24,6 +24,10 @@ Groq retires models periodically, and it presents as every request failing at on
 
 ## API
 
+### GET /health
+
+Returns `{ "ok": true, "model": "openai/gpt-oss-120b" }`. Use it to confirm which model is live without sending a validation request.
+
 ### POST /validate
 
 **Request** (only `reason` and `hostname` are required):
