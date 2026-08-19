@@ -1,38 +1,39 @@
-# AI Site Blocker - Chrome Extension
+# Focus Shield - Chrome Extension
 
-AI-powered Chrome extension for intelligently blocking distracting websites with time-boxed unblocks.
+The extension half of [Focus Shield](../README.md). See the root README for what it does and how to install it.
 
 ## Development
 
 ```bash
 npm install
-npm run dev     # Watch mode with hot reload
-npm run build   # Production build
+npm run dev     # watch mode, points the bouncer at http://localhost:8000
+npm run build   # production build, points at the deployed server
 ```
 
-## Build Output
+## Build output
 
-Built files go to `../dist/` (one level up from client folder).
+Everything goes to `../dist/` (the repo root, not `client/dist`). Load that folder in Chrome via `chrome://extensions` -> Developer mode -> Load unpacked.
 
-Load `../dist/` in Chrome to test the extension.
-
-## Project Structure
+## Project structure
 
 ```
 client/
 ├── src/
-│   ├── background/        # Service worker (blocking logic)
-│   ├── content/          # Content script (overlay UI)
-│   ├── options/          # Settings page
-│   └── index.css         # Tailwind CSS
-├── public/               # Static assets
-├── manifest.json         # Extension manifest
-└── vite.config.ts        # Build config
+│   ├── background/       # service worker: blocking, storage, alarms, badge
+│   │   ├── utils/blocking.ts     # hostname matching + the block decision
+│   │   └── services/             # storage helpers, bouncer API client
+│   ├── blocked/          # the block page (reason form, AI conversation)
+│   ├── options/          # settings, access history, to-do reminders
+│   ├── onboarding/       # first-install walkthrough
+│   ├── components/ui/    # shadcn components
+│   └── index.css         # Tailwind v4
+├── public/               # icons, onboarding screenshots
+├── manifest.json
+└── vite.config.ts
 ```
 
-## Key Implementation Details
+## Key implementation details
 
-- **Shadow DOM**: Content script uses Shadow DOM for CSS isolation
-- **Manifest V3**: Uses service worker instead of background page
-- **Tailwind v4**: CSS injected inline into Shadow DOM
-- **React 19**: Latest React with new JSX transform
+- **Manifest V3.** A service worker, not a background page. It is torn down when idle, so anything that must survive belongs in `chrome.storage`, not a module-level variable.
+- **No content scripts.** Blocking happens by intercepting tab navigation in the worker and redirecting to an extension page, so nothing is injected into the sites you visit.
+- **React 19 + Tailwind v4**, one Vite entry per surface (blocked, options, onboarding).
