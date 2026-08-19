@@ -2,6 +2,7 @@ import '@std/dotenv/load';
 import { z } from 'zod';
 import OpenAI from 'openai';
 import { validateUnblockReasonLegacy } from './validate-legacy.ts';
+import { GROQ_MODEL } from './config.ts';
 
 // Cutoff date: Dec 25, 2025 - after this, all requests use new API
 const V2_CUTOFF_DATE = new Date('2025-12-25T00:00:00Z');
@@ -205,7 +206,7 @@ CRITICAL: "seconds" must be a plain INTEGER. Convert minutes to seconds: 5 min =
   });
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+    model: GROQ_MODEL,
     temperature: 0.85,
     messages: userMessages,
     response_format: { type: 'json_object' },
@@ -293,13 +294,19 @@ Deno.serve({ port: 8000 }, async (req) => {
       });
     } catch (error) {
       console.error('Error:', error);
-      return new Response(JSON.stringify({ error: 'Internal server error' }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
+      // Surface the real cause: a blank 500 made the Groq model
+      // decommissioning impossible to diagnose from the extension.
+      const detail = error instanceof Error ? error.message : String(error);
+      return new Response(
+        JSON.stringify({ error: 'Internal server error', detail, model: GROQ_MODEL }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
     }
   }
 

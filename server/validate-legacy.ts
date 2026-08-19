@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import OpenAI from 'openai';
+import { GROQ_MODEL } from './config.ts';
 
 const groq = new OpenAI({
   apiKey: Deno.env.get('GROQ_API_KEY'),
@@ -73,7 +74,7 @@ JSON format: {seconds, valid, message, followUpQuestion}`,
   });
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+    model: GROQ_MODEL,
     temperature: 0.7,
     messages: userMessages,
     response_format: { type: 'json_object' },
